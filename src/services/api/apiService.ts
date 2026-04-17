@@ -4,7 +4,7 @@ import axios, {
   AxiosResponse,
   InternalAxiosRequestConfig,
 } from "axios";
-import config from "@/config";
+import config from "../../config";
 
 /** Normalized error shape for consistent UI / logging after interceptor processing */
 export interface NormalizedApiError {
@@ -159,7 +159,7 @@ const api = axios.create({
 
 // ✅ Attach token automatically
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("accessToken");
+  const token = localStorage.getItem("token");
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
