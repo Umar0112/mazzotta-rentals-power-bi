@@ -1,18 +1,25 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router';
 import logo from '../imports/mazzotta-logo.png';
+import { authService } from '../services/authService/authService';
 
 export default function Login() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [email, setEmail] = useState('mazzottabi@sixlogs.com');
+  const [password, setPassword] = useState('123456');
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    // Simulate authentication delay
-    setTimeout(() => {
+    try {
+      await authService.signIn({ email, pin: password });
       navigate('/dashboard');
-    }, 800);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -40,6 +47,8 @@ export default function Login() {
             <input
               type="email"
               id="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               placeholder="name@example.com"
               className="flex h-11 w-full rounded-[var(--radius-md)] border border-input bg-input-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200 hover:border-border/80"
               required
@@ -57,6 +66,8 @@ export default function Login() {
             <input
               type="password"
               id="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
               className="flex h-11 w-full rounded-[var(--radius-md)] border border-input bg-input-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200 hover:border-border/80"
               required

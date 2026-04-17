@@ -16,20 +16,18 @@ export const authService = {
     async signIn(payload: any): Promise<any> {
         const data = await ApiService.post<any>("/auth/login", payload);
 
-        if (data?.data?.accessToken) {
-            localStorage.setItem("accessToken", data.data.accessToken);
+        if (data?.success) {
+            localStorage.setItem("token", data.token);
         }
-        if (data?.data?.token) {
-            localStorage.setItem("token", data.data.token);
-        }
-        if (data?.data?.user) {
-            localStorage.setItem("user", JSON.stringify(data.data.user));
-            if (data.data.user.role) {
-                localStorage.setItem("user_role", data.data.user.role);
-            }
+        if (data?.user) {
+            localStorage.setItem("user", JSON.stringify(data.user));
         }
 
         return data;
+    },
+
+    async getPostgresOrdersReservationView(): Promise<any> {
+        return await ApiService.get<any>("/postgres-reservation-screen");
     },
 
     /**

@@ -1,8 +1,118 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import svgPaths from "./svg-uvl1ln4px5";
 import mazzottaLogo from "./mazzotta-logo.png";
 import { Sidebar as CollapsibleSidebar } from "./Sidebar";
 import { KpiCard } from "../app/components/KpiCard";
+import { authService } from '../services/authService/authService';
+
+const formatApiDate = (dateStr: string) => {
+  if (!dateStr || dateStr.length !== 8) return dateStr;
+  const year = dateStr.substring(2, 4);
+  const month = dateStr.substring(4, 6);
+  const day = dateStr.substring(6, 8);
+  return `${month}/${day}/${year}`;
+};
+
+const GenericTable = ({ data, headers }: { data: any[]; headers?: string[] }) => {
+  if (!data || data.length === 0) return (
+    <div className="p-8 text-center text-gray-400 font-['Inter',sans-serif]">No reservations found.</div>
+  );
+
+  const tableHeaders = headers || (data.length > 0 ? Object.keys(data[0]) : []);
+
+  return (
+    <div className="flex-1 overflow-auto relative w-full no-scrollbar" data-name="GenericTable">
+      <style>{`
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      `}</style>
+      <table className="w-full border-collapse" style={{ minWidth: '900px' }}>
+        <thead className="sticky top-0 z-10">
+          <tr className="bg-[#f8fafc] shadow-[0_1px_0_0_#f1f5f9]">
+            {tableHeaders.map((h, i) => (
+              <th key={i} className={`px-[12px] py-[10px] font-['Inter:Bold',sans-serif] font-bold text-[10px] text-[#94a3b8] tracking-[0.7px] uppercase whitespace-nowrap ${['Units', 'Rental Days', 'UNITS', 'DAYS'].includes(h) ? 'text-center' : 'text-left'}`}>
+                {h}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {data.map((row, rowIndex) => (
+            <tr key={rowIndex} className={`${rowIndex % 2 === 1 ? 'bg-[#fafafa]' : 'bg-white'} border-b border-[#f8fafc] hover:bg-slate-50 transition-colors`} style={{ height: '52px' }}>
+              {tableHeaders.map((h, colIndex) => {
+                const rawValue = row[h];
+                const value = typeof rawValue === 'string' ? rawValue.trim() : rawValue;
+                const isItemNum = h.toLowerCase().includes('item#');
+                const isRep = h === 'REP';
+                const isOut = h === 'OUT' || h === 'Rental Days';
+
+                return (
+                  <td key={colIndex} className={`px-[12px] py-[8px] whitespace-nowrap ${['Units', 'Rental Days', 'UNITS', 'DAYS'].includes(h) ? 'text-center' : ''}`}>
+                    {isItemNum && (value === null || value === '') ? (
+                      <span className="inline-flex items-center bg-[#fef2f2] border border-[#fecaca] rounded-[4px] px-[5px] py-[1px] font-['Inter:Bold',sans-serif] font-bold text-[10px] text-[#c72e23] whitespace-nowrap">OPEN</span>
+                    ) : isRep ? (
+                      <span className="inline-flex items-center bg-[#f1f5f9] rounded-[4px] px-[5px] py-[1px] font-['Inter:Semi_Bold',sans-serif] font-semibold text-[10px] text-[#334155] whitespace-nowrap">{value}</span>
+                    ) : (
+                      <span className={`font-['Inter:Medium',sans-serif] font-medium text-[11px] ${isRep ? 'text-[#334155]' : 'text-[#0f172a]'}`}>
+                        {isOut && value && value.toString().length === 8 ? formatApiDate(value.toString()) : (value ?? '—')}
+                      </span>
+                    )}
+                  </td>
+                );
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+};
+
+const DynamicReservationTable = ({ title, date, data, headers }: { title: string; date: string; data: any[]; headers?: string[] }) => {
+  const openItems = (data || []).filter(item => {
+    const itemKey = Object.keys(item).find(k => k.toLowerCase().includes('item#'));
+    if (!itemKey) return false;
+    const val = item[itemKey];
+    return val === null || (typeof val === 'string' && val.trim() === '');
+  }).length;
+
+  return (
+    <div className="bg-white flex-1 min-h-0 flex flex-col rounded-[16px] relative overflow-hidden ring-1 ring-slate-200/50 shadow-sm" data-name="TableCard">
+      <div className="h-[57px] relative shrink-0 w-full border-b border-slate-100 bg-white">
+        <div className="flex items-center justify-between h-full px-[20px]">
+          <div className="flex items-center gap-[12px]">
+            <div className={`h-[20px] rounded-full shrink-0 w-[4px] ${title.includes('Today') ? 'bg-[#c72e23]' : 'bg-[#1d50ad]'}`} />
+            <div className="flex flex-col">
+              <span className="font-['Inter:Semi_Bold',sans-serif] font-semibold text-[14px] text-[#0f172a] leading-tight">{title}</span>
+              <span className="font-['Inter:Regular',sans-serif] font-normal text-[12px] text-[#94a3b8]">{date}</span>
+            </div>
+            <div className="bg-[#f1f5f9] px-[8px] py-[2px] rounded-[6px] ml-1">
+              <span className="font-['Inter:Semi_Bold',sans-serif] font-semibold text-[12px] text-[#64748b]">{data.length}</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-[12px]">
+            {openItems > 0 && (
+              <div className="bg-[#fef2f2] border border-[#fecaca] px-[9px] py-[3px] rounded-[6px]">
+                <span className="font-['Inter:Semi_Bold',sans-serif] font-semibold text-[11px] text-[#c72e23]">{openItems} OPEN</span>
+              </div>
+            )}
+            <div className="flex items-center gap-1.5 opacity-80">
+              <span className="font-['Inter:Medium',sans-serif] font-medium text-[12px] text-[#c72e23]">All up to date</span>
+              <svg className="size-3.5 text-[#c72e23]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
+        <GenericTable data={data} headers={headers} />
+      </div>
+    </div>
+  );
+};
+;
+
 
 function Icon() {
   return (
@@ -209,11 +319,38 @@ function Icon6() {
 }
 
 function Button6() {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const handleLogout = () => {
+    localStorage.clear();
+    window.location.href = '/login';
+  };
+
   return (
-    <div className="flex gap-[8px] h-[44px] items-center px-[8px] py-[6px] rounded-[10px]" data-name="Button">
-      <Container4 />
-      <Text1 />
-      <Icon6 />
+    <div className="relative">
+      <div 
+        className="flex gap-[8px] h-[44px] items-center px-[8px] py-[6px] rounded-[10px] cursor-pointer hover:bg-slate-50 transition-colors" 
+        onClick={() => setIsOpen(!isOpen)}
+        data-name="Button"
+      >
+        <Container4 />
+        <Text1 />
+        <Icon6 />
+      </div>
+
+      {isOpen && (
+        <div className="absolute top-full right-0 mt-1 w-48 bg-white rounded-xl shadow-xl border border-slate-200 py-1 overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2 duration-200">
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-600 hover:bg-red-50 hover:text-red-600 transition-colors text-left"
+          >
+            <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+            <span className="font-['Inter:Semi_Bold',sans-serif] font-semibold">Logout</span>
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -251,11 +388,12 @@ function Button7() {
 function Container2() {
   return (
     <div className="flex items-center gap-0 h-[44px]" data-name="Container">
-      <Button7 />
-      <Button2 />
-      <Button3 />
-      <Button4 />
-      <Button5 />
+      {/* Hidden Notification, Download, and Settings icons as requested */}
+      {/* <Button7 /> */}
+      {/* <Button2 /> */}
+      {/* <Button3 /> */}
+      {/* <Button4 /> */}
+      {/* <Button5 /> */}
       <Container3 />
       <Button6 />
     </div>
@@ -313,16 +451,16 @@ function TopHeader({ onEditClick, onMenuClick, onToggle, onFullscreen, isFullscr
 
 
 
-function KpiTiles() {
+function KpiTiles({ todayCount, nextDayCount, todayUnits, nextDayUnits }: { todayCount: number; nextDayCount: number; todayUnits: number; nextDayUnits: number }) {
   return (
     <div className="relative shrink-0 w-full" data-name="KPITiles">
       <KpiCard
-        todayTitle="Reservations Today - All Locations (04/14/2026)"
-        todayCount={6}
-        todayUnits={6}
-        nextDayTitle="Reservations Next Work Day - All Locations (04/15/2026)"
-        nextDayCount={25}
-        nextDayUnits={29}
+        todayTitle="Reservations Today - All Locations"
+        todayCount={todayCount}
+        todayUnits={todayUnits}
+        nextDayTitle="Reservations Next Work Day - All Locations"
+        nextDayCount={nextDayCount}
+        nextDayUnits={nextDayUnits}
       />
     </div>
   );
@@ -2006,49 +2144,60 @@ function TableCard2() {
   );
 }
 
-function ReservationTables() {
+function ReservationTables({ todayData, tomorrowData, todayDisplayDate, tomorrowDisplayDate, headers }: { todayData: any[]; tomorrowData: any[]; todayDisplayDate: string; tomorrowDisplayDate: string; headers?: string[] }) {
   return (
     <div className="flex-1 min-h-0 flex flex-col gap-[20px] w-full" data-name="ReservationTables">
-      <TableCard />
-      <TableCard2 />
+      <DynamicReservationTable title="Today's Reservations" date={`All Locations · ${todayDisplayDate}`} data={todayData} headers={headers} />
+      <DynamicReservationTable title="Tomorrow's Reservations" date={`All Locations · ${tomorrowDisplayDate}`} data={tomorrowData} headers={headers} />
     </div>
   );
 }
 
-function ScrollAreaViewport() {
+function ScrollAreaViewport({ todayData, tomorrowData, todayDisplayDate, tomorrowDisplayDate, todayCount, tomorrowCount, todayUnits, tomorrowUnits, headers, isLoading }: { todayData: any[]; tomorrowData: any[]; todayDisplayDate: string; tomorrowDisplayDate: string; todayCount: number; tomorrowCount: number; todayUnits: number; tomorrowUnits: number; headers?: string[]; isLoading: boolean }) {
+  if (isLoading) {
+    return (
+      <div className="flex-1 flex items-center justify-center bg-[#f8fafc]">
+        <div className="flex flex-col items-center gap-4">
+          <div className="size-10 border-4 border-slate-200 border-t-[#c72e23] rounded-full animate-spin" />
+          <span className="font-['Inter:Medium',sans-serif] font-medium text-slate-500 text-sm animate-pulse">Fetching latest reservations...</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col h-full w-full overflow-hidden" data-name="ScrollAreaViewport">
       <div className="shrink-0 px-[24px] pt-[24px] pb-[16px]">
-        <KpiTiles />
+        <KpiTiles todayCount={todayCount} nextDayCount={tomorrowCount} todayUnits={todayUnits} nextDayUnits={tomorrowUnits} />
       </div>
       <div className="flex-1 min-h-0 flex flex-col px-[24px] pb-[24px]">
-        <ReservationTables />
+        <ReservationTables todayData={todayData} tomorrowData={tomorrowData} todayDisplayDate={todayDisplayDate} tomorrowDisplayDate={tomorrowDisplayDate} headers={headers} />
       </div>
     </div>
   );
 }
 
-function Container6() {
+function Container6({ todayData, tomorrowData, todayDisplayDate, tomorrowDisplayDate, todayCount, tomorrowCount, todayUnits, tomorrowUnits, headers, isLoading }: { todayData: any[]; tomorrowData: any[]; todayDisplayDate: string; tomorrowDisplayDate: string; todayCount: number; tomorrowCount: number; todayUnits: number; tomorrowUnits: number; headers?: string[]; isLoading: boolean }) {
   return (
     <div className="flex-1 min-h-0 flex flex-col w-full overflow-hidden" data-name="Container">
-      <ScrollAreaViewport />
+      <ScrollAreaViewport todayData={todayData} tomorrowData={tomorrowData} todayDisplayDate={todayDisplayDate} tomorrowDisplayDate={tomorrowDisplayDate} todayCount={todayCount} tomorrowCount={tomorrowCount} todayUnits={todayUnits} tomorrowUnits={tomorrowUnits} headers={headers} isLoading={isLoading} />
     </div>
   );
 }
 
-function Container5({ isFullscreen }: { isFullscreen: boolean }) {
+function Container5({ isFullscreen, todayData, tomorrowData, todayDisplayDate, tomorrowDisplayDate, todayCount, tomorrowCount, todayUnits, tomorrowUnits, headers, isLoading }: { isFullscreen: boolean; todayData: any[]; tomorrowData: any[]; todayDisplayDate: string; tomorrowDisplayDate: string; todayCount: number; tomorrowCount: number; todayUnits: number; tomorrowUnits: number; headers?: string[]; isLoading: boolean }) {
   return (
     <div
       className="absolute left-0 right-0 bottom-0 overflow-hidden flex flex-col"
       style={{ top: isFullscreen ? 0 : 60 }}
       data-name="Container"
     >
-      <Container6 />
+      <Container6 todayData={todayData} tomorrowData={tomorrowData} todayDisplayDate={todayDisplayDate} tomorrowDisplayDate={tomorrowDisplayDate} todayCount={todayCount} tomorrowCount={tomorrowCount} todayUnits={todayUnits} tomorrowUnits={tomorrowUnits} headers={headers} isLoading={isLoading} />
     </div>
   );
 }
 
-function Container({ onEditClick, onMenuClick, collapsed, onToggle, isFullscreen, onFullscreen }: { onEditClick: () => void; onMenuClick: () => void; collapsed: boolean; onToggle?: () => void; isFullscreen: boolean; onFullscreen: () => void }) {
+function Container({ onEditClick, onMenuClick, collapsed, onToggle, isFullscreen, onFullscreen, todayData, tomorrowData, todayDisplayDate, tomorrowDisplayDate, todayCount, tomorrowCount, todayUnits, tomorrowUnits, headers, isLoading }: { onEditClick: () => void; onMenuClick: () => void; collapsed: boolean; onToggle?: () => void; isFullscreen: boolean; onFullscreen: () => void; todayData: any[]; tomorrowData: any[]; todayDisplayDate: string; tomorrowDisplayDate: string; todayCount: number; tomorrowCount: number; todayUnits: number; tomorrowUnits: number; headers?: string[]; isLoading: boolean }) {
   return (
     <div
       className="absolute h-full overflow-clip top-0 right-0"
@@ -2059,7 +2208,7 @@ function Container({ onEditClick, onMenuClick, collapsed, onToggle, isFullscreen
       data-name="Container"
     >
       <TopHeader onEditClick={onEditClick} onMenuClick={onMenuClick} onToggle={onToggle} onFullscreen={onFullscreen} isFullscreen={isFullscreen} />
-      <Container5 isFullscreen={isFullscreen} />
+      <Container5 isFullscreen={isFullscreen} todayData={todayData} tomorrowData={tomorrowData} todayDisplayDate={todayDisplayDate} tomorrowDisplayDate={tomorrowDisplayDate} todayCount={todayCount} tomorrowCount={tomorrowCount} todayUnits={todayUnits} tomorrowUnits={tomorrowUnits} headers={headers} isLoading={isLoading} />
     </div>
   );
 }
@@ -3374,7 +3523,7 @@ function MobileMenuButton({ onClick }: { onClick: () => void }) {
   );
 }
 
-function App({ onEditClick, onMenuClick, collapsed, onToggle, isFullscreen, onFullscreen }: { onEditClick: () => void; onMenuClick: () => void; collapsed: boolean; onToggle: () => void; isFullscreen: boolean; onFullscreen: () => void }) {
+function App({ onEditClick, onMenuClick, collapsed, onToggle, isFullscreen, onFullscreen, todayData, tomorrowData, todayDisplayDate, tomorrowDisplayDate, todayCount, tomorrowCount, todayUnits, tomorrowUnits, headers, isLoading }: { onEditClick: () => void; onMenuClick: () => void; collapsed: boolean; onToggle: () => void; isFullscreen: boolean; onFullscreen: () => void; todayData: any[]; tomorrowData: any[]; todayDisplayDate: string; tomorrowDisplayDate: string; todayCount: number; tomorrowCount: number; todayUnits: number; tomorrowUnits: number; headers?: string[]; isLoading: boolean }) {
   return (
     <div className="bg-[#f8fafc] h-screen overflow-hidden relative shrink-0 w-full flex" data-name="App">
       {/* Collapsible sidebar — desktop only, hidden in fullscreen */}
@@ -3383,7 +3532,7 @@ function App({ onEditClick, onMenuClick, collapsed, onToggle, isFullscreen, onFu
           <CollapsibleSidebar collapsed={collapsed} onToggle={onToggle} />
         </div>
       )}
-      <Container onEditClick={onEditClick} onMenuClick={onMenuClick} collapsed={collapsed} onToggle={onToggle} isFullscreen={isFullscreen} onFullscreen={onFullscreen} />
+      <Container onEditClick={onEditClick} onMenuClick={onMenuClick} collapsed={collapsed} onToggle={onToggle} isFullscreen={isFullscreen} onFullscreen={onFullscreen} todayData={todayData} tomorrowData={tomorrowData} todayDisplayDate={todayDisplayDate} tomorrowDisplayDate={tomorrowDisplayDate} todayCount={todayCount} tomorrowCount={tomorrowCount} todayUnits={todayUnits} tomorrowUnits={tomorrowUnits} headers={headers} isLoading={isLoading} />
     </div>
   );
 }
@@ -3393,6 +3542,23 @@ export default function Mazzotta() {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [reservationData, setReservationData] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchReservations = async () => {
+      setIsLoading(true);
+      try {
+        const data = await authService.getPostgresOrdersReservationView();
+        setReservationData(data);
+      } catch (error) {
+        console.error('Error fetching reservations:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchReservations();
+  }, []);
 
   useEffect(() => {
     const handleFullscreenChange = () => {
@@ -3414,6 +3580,25 @@ export default function Mazzotta() {
     }
   };
 
+  // Helper to group data using the new API structure
+  const groupedData = useMemo(() => {
+    if (!reservationData || !reservationData.success) {
+      return { today: [], tomorrow: [], todayDate: '—', tomorrowDate: '—', todayCount: 0, tomorrowCount: 0, todayUnits: 0, tomorrowUnits: 0, headers: [] };
+    }
+
+    return {
+      today: reservationData.data?.today || [],
+      tomorrow: reservationData.data?.tomorrow || [],
+      todayDate: reservationData.dashboard?.today?.dateLabel || '—',
+      tomorrowDate: reservationData.dashboard?.tomorrow?.dateLabel || '—',
+      todayCount: reservationData.dashboard?.today?.count || 0,
+      tomorrowCount: reservationData.dashboard?.tomorrow?.count || 0,
+      todayUnits: reservationData.dashboard?.today?.units || 0,
+      tomorrowUnits: reservationData.dashboard?.tomorrow?.units || 0,
+      headers: reservationData.headers || [],
+    };
+  }, [reservationData]);
+
   return (
     <div className="bg-white relative w-full h-screen overflow-hidden" data-name="Mazzotta (2)">
       {/* Main dashboard */}
@@ -3424,6 +3609,16 @@ export default function Mazzotta() {
         onToggle={() => setSidebarCollapsed((v) => !v)}
         isFullscreen={isFullscreen}
         onFullscreen={toggleFullscreen}
+        todayData={groupedData.today}
+        tomorrowData={groupedData.tomorrow}
+        todayDisplayDate={groupedData.todayDate}
+        tomorrowDisplayDate={groupedData.tomorrowDate}
+        todayCount={groupedData.todayCount}
+        tomorrowCount={groupedData.tomorrowCount}
+        todayUnits={groupedData.todayUnits}
+        tomorrowUnits={groupedData.tomorrowUnits}
+        headers={groupedData.headers}
+        isLoading={isLoading}
       />
 
       {/* Mobile sidebar overlay */}
