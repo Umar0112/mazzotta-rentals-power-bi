@@ -27,14 +27,14 @@ function KpiPanel({ title, count, units, bordered = false }: KpiPanelProps) {
             style={{ borderLeft: "1px solid rgba(255,255,255,0.25)" }}
           />
         )}
-        <div className="flex flex-col items-center px-4 py-[10px] w-full">
+        <div className="flex flex-col items-center px-4 py-[12px] w-full">
           <span
             className="text-white text-center whitespace-nowrap"
             style={{
               fontFamily: "'Inter', sans-serif",
               fontWeight: 700,
-              fontSize: "clamp(11px, 1.1vw, 16px)",
-              lineHeight: "24px",
+              fontSize: "clamp(13px, 1.3vw, 19px)",
+              lineHeight: "28px",
             }}
           >
             {title}
@@ -48,7 +48,7 @@ function KpiPanel({ title, count, units, bordered = false }: KpiPanelProps) {
         <div className="flex flex-[1_0_0] flex-col items-start min-w-0">
           {/* Label */}
           <div
-            className="h-[33px] relative w-full flex flex-col items-center justify-center"
+            className="h-[40px] relative w-full flex flex-col items-center justify-center"
             style={{ borderBottom: "1px solid #e8edf3" }}
           >
             <span
@@ -56,22 +56,22 @@ function KpiPanel({ title, count, units, bordered = false }: KpiPanelProps) {
               style={{
                 fontFamily: "'Inter', sans-serif",
                 fontWeight: 600,
-                fontSize: "13px",
-                lineHeight: "19.5px",
+                fontSize: "15px",
+                lineHeight: "22px",
               }}
             >
               Count
             </span>
           </div>
           {/* Value */}
-          <div className="h-[40px] w-full flex flex-col items-center justify-center px-2 py-[6px]">
+          <div className="h-[50px] w-full flex flex-col items-center justify-center px-2 py-[8px]">
             <span
               className="text-[#1a1a1a] text-center whitespace-nowrap"
               style={{
                 fontFamily: "'Inter', sans-serif",
                 fontWeight: 700,
-                fontSize: "20px",
-                lineHeight: "28px",
+                fontSize: "24px",
+                lineHeight: "34px",
               }}
             >
               {count}
@@ -86,7 +86,7 @@ function KpiPanel({ title, count, units, bordered = false }: KpiPanelProps) {
         >
           {/* Label */}
           <div
-            className="h-[33px] relative w-full flex flex-col items-center justify-center"
+            className="h-[40px] relative w-full flex flex-col items-center justify-center"
             style={{ borderBottom: "1px solid #e8edf3" }}
           >
             <span
@@ -94,8 +94,8 @@ function KpiPanel({ title, count, units, bordered = false }: KpiPanelProps) {
               style={{
                 fontFamily: "'Inter', sans-serif",
                 fontWeight: 600,
-                fontSize: "13px",
-                lineHeight: "19.5px",
+                fontSize: "15px",
+                lineHeight: "22px",
               }}
             >
               Units
@@ -103,15 +103,15 @@ function KpiPanel({ title, count, units, bordered = false }: KpiPanelProps) {
           </div>
           {/* Value */}
           <div
-            className="h-[40px] w-full flex flex-col items-center justify-center px-2 py-[6px]"
+            className="h-[50px] w-full flex flex-col items-center justify-center px-2 py-[8px]"
           >
             <span
               className="text-[#1a1a1a] text-center whitespace-nowrap"
               style={{
                 fontFamily: "'Inter', sans-serif",
                 fontWeight: 700,
-                fontSize: "20px",
-                lineHeight: "28px",
+                fontSize: "24px",
+                lineHeight: "34px",
               }}
             >
               {units}
