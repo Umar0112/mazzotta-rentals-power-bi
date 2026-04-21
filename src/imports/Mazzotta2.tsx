@@ -30,7 +30,7 @@ const GenericTable = ({ data, headers }: { data: any[]; headers?: string[] }) =>
         <thead className="sticky top-0 z-10">
           <tr className="bg-[#f8fafc] shadow-[0_1px_0_0_#f1f5f9]">
             {tableHeaders.map((h, i) => (
-              <th key={i} className={`px-[12px] py-[10px] font-['Inter:Bold',sans-serif] font-bold text-[10px] text-[#94a3b8] tracking-[0.7px] uppercase whitespace-nowrap ${['Units', 'Rental Days', 'UNITS', 'DAYS'].includes(h) ? 'text-center' : 'text-left'}`}>
+              <th key={i} className={`px-[12px] py-[10px] font-['Inter:Bold',sans-serif] font-bold text-[12px] text-[#94a3b8] tracking-[0.7px] uppercase whitespace-nowrap ${['Units', 'Rental Days', 'UNITS', 'DAYS'].includes(h) ? 'text-center' : 'text-left'}`}>
                 {h}
               </th>
             ))}
@@ -38,7 +38,7 @@ const GenericTable = ({ data, headers }: { data: any[]; headers?: string[] }) =>
         </thead>
         <tbody>
           {data.map((row, rowIndex) => (
-            <tr key={rowIndex} className={`${rowIndex % 2 === 1 ? 'bg-[#fafafa]' : 'bg-white'} border-b border-[#f8fafc] hover:bg-slate-50 transition-colors`} style={{ height: '52px' }}>
+            <tr key={rowIndex} className={`${rowIndex % 2 === 1 ? 'bg-[#fafafa]' : 'bg-white'} border-b border-[#f8fafc] hover:bg-slate-50 transition-colors`} style={{ height: '60px' }}>
               {tableHeaders.map((h, colIndex) => {
                 const rawValue = row[h];
                 const value = typeof rawValue === 'string' ? rawValue.trim() : rawValue;
@@ -49,11 +49,11 @@ const GenericTable = ({ data, headers }: { data: any[]; headers?: string[] }) =>
                 return (
                   <td key={colIndex} className={`px-[12px] py-[8px] whitespace-nowrap ${['Units', 'Rental Days', 'UNITS', 'DAYS'].includes(h) ? 'text-center' : ''}`}>
                     {isItemNum && (value === null || value === '') ? (
-                      <span className="inline-flex items-center bg-[#fef2f2] border border-[#fecaca] rounded-[4px] px-[5px] py-[1px] font-['Inter:Bold',sans-serif] font-bold text-[10px] text-[#c72e23] whitespace-nowrap">OPEN</span>
+                      <span className="inline-flex items-center bg-[#fef2f2] border border-[#fecaca] rounded-[4px] px-[5px] py-[1px] font-['Inter:Bold',sans-serif] font-bold text-[12px] text-[#c72e23] whitespace-nowrap">OPEN</span>
                     ) : isRep ? (
-                      <span className="inline-flex items-center bg-[#f1f5f9] rounded-[4px] px-[5px] py-[1px] font-['Inter:Semi_Bold',sans-serif] font-semibold text-[10px] text-[#334155] whitespace-nowrap">{value}</span>
+                      <span className="inline-flex items-center bg-[#f1f5f9] rounded-[4px] px-[5px] py-[1px] font-['Inter:Semi_Bold',sans-serif] font-semibold text-[12px] text-[#334155] whitespace-nowrap">{value}</span>
                     ) : (
-                      <span className={`font-['Inter:Medium',sans-serif] font-medium text-[11px] ${isRep ? 'text-[#334155]' : 'text-[#0f172a]'}`}>
+                      <span className={`font-['Inter:Medium',sans-serif] font-medium text-[13px] ${isRep ? 'text-[#334155]' : 'text-[#0f172a]'}`}>
                         {isOut && value && value.toString().length === 8 ? formatApiDate(value.toString()) : (value ?? '—')}
                       </span>
                     )}
@@ -78,26 +78,26 @@ const DynamicReservationTable = ({ title, date, data, headers }: { title: string
 
   return (
     <div className="bg-white flex-1 min-h-0 flex flex-col rounded-[16px] relative overflow-hidden ring-1 ring-slate-200/50 shadow-sm" data-name="TableCard">
-      <div className="h-[57px] relative shrink-0 w-full border-b border-slate-100 bg-white">
+      <div className="h-[68px] relative shrink-0 w-full border-b border-slate-100 bg-white">
         <div className="flex items-center justify-between h-full px-[20px]">
           <div className="flex items-center gap-[12px]">
             <div className={`h-[20px] rounded-full shrink-0 w-[4px] ${title.includes('Today') ? 'bg-[#c72e23]' : 'bg-[#1d50ad]'}`} />
             <div className="flex flex-col">
-              <span className="font-['Inter:Semi_Bold',sans-serif] font-semibold text-[14px] text-[#0f172a] leading-tight">{title}</span>
-              <span className="font-['Inter:Regular',sans-serif] font-normal text-[12px] text-[#94a3b8]">{date}</span>
+              <span className="font-['Inter:Semi_Bold',sans-serif] font-semibold text-[17px] text-[#0f172a] leading-tight">{title}</span>
+              <span className="font-['Inter:Regular',sans-serif] font-normal text-[14px] text-[#94a3b8]">{date}</span>
             </div>
             <div className="bg-[#f1f5f9] px-[8px] py-[2px] rounded-[6px] ml-1">
-              <span className="font-['Inter:Semi_Bold',sans-serif] font-semibold text-[12px] text-[#64748b]">{data.length}</span>
+              <span className="font-['Inter:Semi_Bold',sans-serif] font-semibold text-[14px] text-[#64748b]">{data.length}</span>
             </div>
           </div>
           <div className="flex items-center gap-[12px]">
             {openItems > 0 && (
               <div className="bg-[#fef2f2] border border-[#fecaca] px-[9px] py-[3px] rounded-[6px]">
-                <span className="font-['Inter:Semi_Bold',sans-serif] font-semibold text-[11px] text-[#c72e23]">{openItems} OPEN</span>
+                <span className="font-['Inter:Semi_Bold',sans-serif] font-semibold text-[14px] text-[#c72e23]">{openItems} OPEN</span>
               </div>
             )}
             <div className="flex items-center gap-1.5 opacity-80">
-              <span className="font-['Inter:Medium',sans-serif] font-medium text-[12px] text-[#c72e23]">All up to date</span>
+              <span className="font-['Inter:Medium',sans-serif] font-medium text-[14px] text-[#c72e23]">All up to date</span>
               <svg className="size-3.5 text-[#c72e23]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
               </svg>
