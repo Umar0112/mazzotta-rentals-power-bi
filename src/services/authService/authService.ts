@@ -27,7 +27,7 @@ export const authService = {
     },
 
     async getPostgresOrdersReservationView(): Promise<any> {
-        return await ApiService.get<any>("/postgres-reservation-screen");
+        return await ApiService.get<any>("/ibm-all-reservations");
     },
 
     /**

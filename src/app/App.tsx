@@ -8,6 +8,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Login />} />
         <Route path="/dashboard" element={<Mazzotta />} />
+        <Route path="/eyeball/:location" element={<Mazzotta />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

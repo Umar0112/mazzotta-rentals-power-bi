@@ -1,9 +1,9 @@
 const config = {
-  appName: "CenarioRevamp2026",
+  appName: "mazzotta-power-bi",
   baseURL: "http://localhost:9174/api/",
-  // baseURLApi: "https://cenariov2.sixlogs.io/api", //Development api url
-  // socketUrl: "wss://cenariov2.sixlogs.io/api", //Development api url
-  baseURLApi: "https://mazzotta-bi.vercel.app/api", //Development api url
-  socketUrl: "wss://mazzotta-bi.vercel.app/api", //Development api url
+  // baseURLApi: "https://c02a-72-255-9-8.ngrok-free.app/api", //Development api url
+  // socketUrl: "wss://c02a-72-255-9-8.ngrok-free.app/api", //Development api url
+  baseURLApi: "https://mazzottabi-production.up.railway.app/api", //Development api url
+  socketUrl: "wss://mazzottabi-production.up.railway.app/api", //Development api url
 };
 export default config;
