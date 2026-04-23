@@ -4,6 +4,8 @@ import mazzottaLogo from "./mazzotta-logo.png";
 import { Sidebar as CollapsibleSidebar } from "./Sidebar";
 import { KpiCard } from "../app/components/KpiCard";
 import { authService } from '../services/authService/authService';
+import { useParams } from 'react-router';
+import Eyeball from '../app/components/Eyeball';
 
 const formatApiDate = (dateStr: string) => {
   if (!dateStr || dateStr.length !== 8) return dateStr;
@@ -44,6 +46,7 @@ const GenericTable = ({ data, headers }: { data: any[]; headers?: string[] }) =>
                 const value = typeof rawValue === 'string' ? rawValue.trim() : rawValue;
                 const isItemNum = h.toLowerCase().includes('item#');
                 const isRep = h === 'REP';
+                const isNotes = h.toLowerCase() === 'notes';
                 const isOut = h === 'OUT' || h === 'Rental Days';
 
                 return (
@@ -52,6 +55,15 @@ const GenericTable = ({ data, headers }: { data: any[]; headers?: string[] }) =>
                       <span className="inline-flex items-center bg-[#fef2f2] border border-[#fecaca] rounded-[4px] px-[5px] py-[1px] font-['Inter:Bold',sans-serif] font-bold text-[12px] text-[#c72e23] whitespace-nowrap">OPEN</span>
                     ) : isRep ? (
                       <span className="inline-flex items-center bg-[#f1f5f9] rounded-[4px] px-[5px] py-[1px] font-['Inter:Semi_Bold',sans-serif] font-semibold text-[12px] text-[#334155] whitespace-nowrap">{value}</span>
+                    ) : isNotes ? (
+                      <span
+                        className="font-['Inter:Medium',sans-serif] font-medium text-[13px] text-[#475569]"
+                        title={value?.toString()}
+                      >
+                        {value && value.toString().length > 50
+                          ? `${value.toString().substring(0, 50)}...`
+                          : (value ?? '—')}
+                      </span>
                     ) : (
                       <span className={`font-['Inter:Medium',sans-serif] font-medium text-[13px] ${isRep ? 'text-[#334155]' : 'text-[#0f172a]'}`}>
                         {isOut && value && value.toString().length === 8 ? formatApiDate(value.toString()) : (value ?? '—')}
@@ -328,8 +340,8 @@ function Button6() {
 
   return (
     <div className="relative">
-      <div 
-        className="flex gap-[8px] h-[44px] items-center px-[8px] py-[6px] rounded-[10px] cursor-pointer hover:bg-slate-50 transition-colors" 
+      <div
+        className="flex gap-[8px] h-[44px] items-center px-[8px] py-[6px] rounded-[10px] cursor-pointer hover:bg-slate-50 transition-colors"
         onClick={() => setIsOpen(!isOpen)}
         data-name="Button"
       >
@@ -1146,7 +1158,7 @@ function TableCard1() {
         <thead>
           <tr className="bg-[#f8fafc] border-b border-[#f1f5f9]">
             {['WHAT', 'RESV# — CUSTOMER', 'ITEM#', 'WHERE', 'REP', 'OUT', 'UNITS', 'DAYS', 'NOTES'].map((h, i) => (
-              <th key={i} className={`px-[12px] py-[6px] font-['Inter:Bold',sans-serif] font-bold text-[10px] text-[#94a3b8] tracking-[0.7px] uppercase whitespace-nowrap ${['UNITS','DAYS'].includes(h) ? 'text-center' : 'text-left'}`}>{h}</th>
+              <th key={i} className={`px-[12px] py-[6px] font-['Inter:Bold',sans-serif] font-bold text-[10px] text-[#94a3b8] tracking-[0.7px] uppercase whitespace-nowrap ${['UNITS', 'DAYS'].includes(h) ? 'text-center' : 'text-left'}`}>{h}</th>
             ))}
           </tr>
         </thead>
@@ -2076,7 +2088,7 @@ function TableCard3() {
         <thead>
           <tr className="bg-[#f8fafc] border-b border-[#f1f5f9]">
             {['WHAT', 'RESV# — CUSTOMER', 'ITEM#', 'WHERE', 'REP', 'OUT', 'UNITS', 'DAYS', 'NOTES'].map((h, i) => (
-              <th key={i} className={`px-[12px] py-[6px] font-['Inter:Bold',sans-serif] font-bold text-[10px] text-[#94a3b8] tracking-[0.7px] uppercase whitespace-nowrap ${['UNITS','DAYS'].includes(h) ? 'text-center' : 'text-left'}`}>{h}</th>
+              <th key={i} className={`px-[12px] py-[6px] font-['Inter:Bold',sans-serif] font-bold text-[10px] text-[#94a3b8] tracking-[0.7px] uppercase whitespace-nowrap ${['UNITS', 'DAYS'].includes(h) ? 'text-center' : 'text-left'}`}>{h}</th>
             ))}
           </tr>
         </thead>
@@ -2144,11 +2156,11 @@ function TableCard2() {
   );
 }
 
-function ReservationTables({ todayData, tomorrowData, todayDisplayDate, tomorrowDisplayDate, headers }: { todayData: any[]; tomorrowData: any[]; todayDisplayDate: string; tomorrowDisplayDate: string; headers?: string[] }) {
+function ReservationTables({ todayData, tomorrowData, headers }: { todayData: any[]; tomorrowData: any[]; headers?: string[] }) {
+  const allData = [...(todayData || []), ...(tomorrowData || [])];
   return (
     <div className="flex-1 min-h-0 flex flex-col gap-[20px] w-full" data-name="ReservationTables">
-      <DynamicReservationTable title="Today's Reservations" date={`All Locations · ${todayDisplayDate}`} data={todayData} headers={headers} />
-      <DynamicReservationTable title="Tomorrow's Reservations" date={`All Locations · ${tomorrowDisplayDate}`} data={tomorrowData} headers={headers} />
+      <DynamicReservationTable title="All Reservations" date={`All Locations · Total: ${allData.length}`} data={allData} headers={headers} />
     </div>
   );
 }
@@ -2167,11 +2179,8 @@ function ScrollAreaViewport({ todayData, tomorrowData, todayDisplayDate, tomorro
 
   return (
     <div className="flex flex-col h-full w-full overflow-hidden" data-name="ScrollAreaViewport">
-      <div className="shrink-0 px-[24px] pt-[24px] pb-[16px]">
-        <KpiTiles todayCount={todayCount} nextDayCount={tomorrowCount} todayUnits={todayUnits} nextDayUnits={tomorrowUnits} />
-      </div>
-      <div className="flex-1 min-h-0 flex flex-col px-[24px] pb-[24px]">
-        <ReservationTables todayData={todayData} tomorrowData={tomorrowData} todayDisplayDate={todayDisplayDate} tomorrowDisplayDate={tomorrowDisplayDate} headers={headers} />
+      <div className="flex-1 min-h-0 flex flex-col px-[24px] py-[24px]">
+        <ReservationTables todayData={todayData} tomorrowData={tomorrowData} headers={headers} />
       </div>
     </div>
   );
@@ -2185,19 +2194,25 @@ function Container6({ todayData, tomorrowData, todayDisplayDate, tomorrowDisplay
   );
 }
 
-function Container5({ isFullscreen, todayData, tomorrowData, todayDisplayDate, tomorrowDisplayDate, todayCount, tomorrowCount, todayUnits, tomorrowUnits, headers, isLoading }: { isFullscreen: boolean; todayData: any[]; tomorrowData: any[]; todayDisplayDate: string; tomorrowDisplayDate: string; todayCount: number; tomorrowCount: number; todayUnits: number; tomorrowUnits: number; headers?: string[]; isLoading: boolean }) {
+function Container5({ isFullscreen, todayData, tomorrowData, todayDisplayDate, tomorrowDisplayDate, todayCount, tomorrowCount, todayUnits, tomorrowUnits, headers, isLoading, location }: { isFullscreen: boolean; todayData: any[]; tomorrowData: any[]; todayDisplayDate: string; tomorrowDisplayDate: string; todayCount: number; tomorrowCount: number; todayUnits: number; tomorrowUnits: number; headers?: string[]; isLoading: boolean; location?: string }) {
   return (
     <div
       className="absolute left-0 right-0 bottom-0 overflow-hidden flex flex-col"
       style={{ top: isFullscreen ? 0 : 60 }}
       data-name="Container"
     >
-      <Container6 todayData={todayData} tomorrowData={tomorrowData} todayDisplayDate={todayDisplayDate} tomorrowDisplayDate={tomorrowDisplayDate} todayCount={todayCount} tomorrowCount={tomorrowCount} todayUnits={todayUnits} tomorrowUnits={tomorrowUnits} headers={headers} isLoading={isLoading} />
+      {location ? (
+        <div className="flex-1 p-6 overflow-auto">
+          <Eyeball location={location} />
+        </div>
+      ) : (
+        <Container6 todayData={todayData} tomorrowData={tomorrowData} todayDisplayDate={todayDisplayDate} tomorrowDisplayDate={tomorrowDisplayDate} todayCount={todayCount} tomorrowCount={tomorrowCount} todayUnits={todayUnits} tomorrowUnits={tomorrowUnits} headers={headers} isLoading={isLoading} />
+      )}
     </div>
   );
 }
 
-function Container({ onEditClick, onMenuClick, collapsed, onToggle, isFullscreen, onFullscreen, todayData, tomorrowData, todayDisplayDate, tomorrowDisplayDate, todayCount, tomorrowCount, todayUnits, tomorrowUnits, headers, isLoading }: { onEditClick: () => void; onMenuClick: () => void; collapsed: boolean; onToggle?: () => void; isFullscreen: boolean; onFullscreen: () => void; todayData: any[]; tomorrowData: any[]; todayDisplayDate: string; tomorrowDisplayDate: string; todayCount: number; tomorrowCount: number; todayUnits: number; tomorrowUnits: number; headers?: string[]; isLoading: boolean }) {
+function Container({ onEditClick, onMenuClick, collapsed, onToggle, isFullscreen, onFullscreen, todayData, tomorrowData, todayDisplayDate, tomorrowDisplayDate, todayCount, tomorrowCount, todayUnits, tomorrowUnits, headers, isLoading, location }: { onEditClick: () => void; onMenuClick: () => void; collapsed: boolean; onToggle?: () => void; isFullscreen: boolean; onFullscreen: () => void; todayData: any[]; tomorrowData: any[]; todayDisplayDate: string; tomorrowDisplayDate: string; todayCount: number; tomorrowCount: number; todayUnits: number; tomorrowUnits: number; headers?: string[]; isLoading: boolean; location?: string }) {
   return (
     <div
       className="absolute h-full overflow-clip top-0 right-0"
@@ -2208,7 +2223,7 @@ function Container({ onEditClick, onMenuClick, collapsed, onToggle, isFullscreen
       data-name="Container"
     >
       <TopHeader onEditClick={onEditClick} onMenuClick={onMenuClick} onToggle={onToggle} onFullscreen={onFullscreen} isFullscreen={isFullscreen} />
-      <Container5 isFullscreen={isFullscreen} todayData={todayData} tomorrowData={tomorrowData} todayDisplayDate={todayDisplayDate} tomorrowDisplayDate={tomorrowDisplayDate} todayCount={todayCount} tomorrowCount={tomorrowCount} todayUnits={todayUnits} tomorrowUnits={tomorrowUnits} headers={headers} isLoading={isLoading} />
+      <Container5 isFullscreen={isFullscreen} todayData={todayData} tomorrowData={tomorrowData} todayDisplayDate={todayDisplayDate} tomorrowDisplayDate={tomorrowDisplayDate} todayCount={todayCount} tomorrowCount={tomorrowCount} todayUnits={todayUnits} tomorrowUnits={tomorrowUnits} headers={headers} isLoading={isLoading} location={location} />
     </div>
   );
 }
@@ -3347,168 +3362,168 @@ function EditDrawerContent({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="flex flex-col size-full overflow-hidden">
-        {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-[#f1f5f9] shrink-0">
-          <div className="flex items-center gap-2">
-            <svg className="size-4 text-[#64748b]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <circle cx="11" cy="11" r="8" strokeWidth="2" />
-              <line x1="21" y1="21" x2="16.65" y2="16.65" strokeWidth="2" strokeLinecap="round" />
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-[#f1f5f9] shrink-0">
+        <div className="flex items-center gap-2">
+          <svg className="size-4 text-[#64748b]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <circle cx="11" cy="11" r="8" strokeWidth="2" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" strokeWidth="2" strokeLinecap="round" />
+          </svg>
+          <span className="font-['Inter:Semi_Bold',sans-serif] font-semibold" style={{ fontSize: '14px', color: '#0f172a' }}>Filters</span>
+        </div>
+        <button onClick={onClose} className="text-[#94a3b8] hover:text-[#475569] transition-colors p-1 rounded">
+          <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <line x1="18" y1="6" x2="6" y2="18" strokeWidth="2" strokeLinecap="round" />
+            <line x1="6" y1="6" x2="18" y2="18" strokeWidth="2" strokeLinecap="round" />
+          </svg>
+        </button>
+      </div>
+
+      {/* Scrollable body */}
+      <div className="flex-1 overflow-y-auto">
+
+        {/* Filters on this page */}
+        <div className="px-4 pt-4 pb-3 border-b border-[#f1f5f9]">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="font-['Inter:Medium',sans-serif] font-medium" style={{ fontSize: '12px', color: '#475569' }}>Filters on this page</span>
+            <svg className="size-3 text-[#94a3b8]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <polyline points="6,9 12,15 18,9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
-            <span className="font-['Inter:Semi_Bold',sans-serif] font-semibold" style={{ fontSize: '14px', color: '#0f172a' }}>Filters</span>
           </div>
-          <button onClick={onClose} className="text-[#94a3b8] hover:text-[#475569] transition-colors p-1 rounded">
-            <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <line x1="18" y1="6" x2="6" y2="18" strokeWidth="2" strokeLinecap="round" />
-              <line x1="6" y1="6" x2="18" y2="18" strokeWidth="2" strokeLinecap="round" />
-            </svg>
+          <button className="font-['Inter:Regular',sans-serif] font-normal hover:underline" style={{ fontSize: '12px', color: '#c72e23' }}>
+            + Add data fields here
           </button>
         </div>
 
-        {/* Scrollable body */}
-        <div className="flex-1 overflow-y-auto">
+        {/* Filters on all pages */}
+        <div className="px-4 pt-3 pb-3 border-b border-[#f1f5f9]">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="font-['Inter:Medium',sans-serif] font-medium" style={{ fontSize: '12px', color: '#475569' }}>Filters on all pages</span>
+            <svg className="size-3 text-[#94a3b8]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <polyline points="6,9 12,15 18,9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </div>
+          <button className="font-['Inter:Regular',sans-serif] font-normal hover:underline" style={{ fontSize: '12px', color: '#c72e23' }}>
+            + Add data fields here
+          </button>
+        </div>
 
-          {/* Filters on this page */}
-          <div className="px-4 pt-4 pb-3 border-b border-[#f1f5f9]">
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="font-['Inter:Medium',sans-serif] font-medium" style={{ fontSize: '12px', color: '#475569' }}>Filters on this page</span>
-              <svg className="size-3 text-[#94a3b8]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <polyline points="6,9 12,15 18,9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </div>
-            <button className="font-['Inter:Regular',sans-serif] font-normal hover:underline" style={{ fontSize: '12px', color: '#c72e23' }}>
-              + Add data fields here
+        {/* Keep all filters + cross-report toggles */}
+        <div className="px-4 py-3 border-b border-[#f1f5f9] flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <span className="font-['Inter:Regular',sans-serif] font-normal" style={{ fontSize: '12px', color: '#334155' }}>Keep all filters</span>
+            <Toggle checked={keepFilters} onChange={() => setKeepFilters(!keepFilters)} />
+          </div>
+          <button className="font-['Inter:Regular',sans-serif] font-normal hover:underline text-left" style={{ fontSize: '12px', color: '#c72e23' }}>
+            Add drill-through fields here
+          </button>
+          <div className="flex items-center justify-between">
+            <span className="font-['Inter:Regular',sans-serif] font-normal" style={{ fontSize: '12px', color: '#334155' }}>Cross-report</span>
+            <Toggle checked={crossReport} onChange={() => setCrossReport(!crossReport)} />
+          </div>
+        </div>
+
+        {/* Visualizations section */}
+        <div className="px-4 pt-4 pb-2">
+          <span className="font-['Inter:Bold',sans-serif] font-bold" style={{ fontSize: '13px', color: '#0f172a', letterSpacing: '0.1px' }}>Visualizations</span>
+        </div>
+
+        {/* Tabs */}
+        <div className="px-4 mb-3">
+          <div className="flex border-b border-[#e2e8f0]">
+            <button
+              onClick={() => setActiveTab('build')}
+              className="py-1.5 pr-4 font-['Inter:Medium',sans-serif] font-medium transition-colors relative"
+              style={{ fontSize: '12px', color: activeTab === 'build' ? '#c72e23' : '#94a3b8' }}
+            >
+              Build visual
+              {activeTab === 'build' && (
+                <span className="absolute bottom-0 left-0 right-0 rounded-t" style={{ height: '2px', backgroundColor: '#c72e23' }} />
+              )}
+            </button>
+            <button
+              onClick={() => setActiveTab('format')}
+              className="py-1.5 px-4 font-['Inter:Medium',sans-serif] font-medium transition-colors relative"
+              style={{ fontSize: '12px', color: activeTab === 'format' ? '#c72e23' : '#94a3b8' }}
+            >
+              Format visual
+              {activeTab === 'format' && (
+                <span className="absolute bottom-0 left-0 right-0 rounded-t" style={{ height: '2px', backgroundColor: '#c72e23' }} />
+              )}
             </button>
           </div>
+        </div>
 
-          {/* Filters on all pages */}
-          <div className="px-4 pt-3 pb-3 border-b border-[#f1f5f9]">
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="font-['Inter:Medium',sans-serif] font-medium" style={{ fontSize: '12px', color: '#475569' }}>Filters on all pages</span>
-              <svg className="size-3 text-[#94a3b8]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <polyline points="6,9 12,15 18,9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+        {activeTab === 'build' && (
+          <>
+            {/* Drag hint */}
+            <div className="px-4 mb-3">
+              <p className="font-['Inter:Regular',sans-serif] font-normal" style={{ fontSize: '11px', color: '#c72e23' }}>
+                Drag a visual onto the canvas
+              </p>
             </div>
-            <button className="font-['Inter:Regular',sans-serif] font-normal hover:underline" style={{ fontSize: '12px', color: '#c72e23' }}>
-              + Add data fields here
-            </button>
-          </div>
 
-          {/* Keep all filters + cross-report toggles */}
-          <div className="px-4 py-3 border-b border-[#f1f5f9] flex flex-col gap-3">
-            <div className="flex items-center justify-between">
-              <span className="font-['Inter:Regular',sans-serif] font-normal" style={{ fontSize: '12px', color: '#334155' }}>Keep all filters</span>
-              <Toggle checked={keepFilters} onChange={() => setKeepFilters(!keepFilters)} />
-            </div>
-            <button className="font-['Inter:Regular',sans-serif] font-normal hover:underline text-left" style={{ fontSize: '12px', color: '#c72e23' }}>
-              Add drill-through fields here
-            </button>
-            <div className="flex items-center justify-between">
-              <span className="font-['Inter:Regular',sans-serif] font-normal" style={{ fontSize: '12px', color: '#334155' }}>Cross-report</span>
-              <Toggle checked={crossReport} onChange={() => setCrossReport(!crossReport)} />
-            </div>
-          </div>
-
-          {/* Visualizations section */}
-          <div className="px-4 pt-4 pb-2">
-            <span className="font-['Inter:Bold',sans-serif] font-bold" style={{ fontSize: '13px', color: '#0f172a', letterSpacing: '0.1px' }}>Visualizations</span>
-          </div>
-
-          {/* Tabs */}
-          <div className="px-4 mb-3">
-            <div className="flex border-b border-[#e2e8f0]">
-              <button
-                onClick={() => setActiveTab('build')}
-                className="py-1.5 pr-4 font-['Inter:Medium',sans-serif] font-medium transition-colors relative"
-                style={{ fontSize: '12px', color: activeTab === 'build' ? '#c72e23' : '#94a3b8' }}
-              >
-                Build visual
-                {activeTab === 'build' && (
-                  <span className="absolute bottom-0 left-0 right-0 rounded-t" style={{ height: '2px', backgroundColor: '#c72e23' }} />
-                )}
-              </button>
-              <button
-                onClick={() => setActiveTab('format')}
-                className="py-1.5 px-4 font-['Inter:Medium',sans-serif] font-medium transition-colors relative"
-                style={{ fontSize: '12px', color: activeTab === 'format' ? '#c72e23' : '#94a3b8' }}
-              >
-                Format visual
-                {activeTab === 'format' && (
-                  <span className="absolute bottom-0 left-0 right-0 rounded-t" style={{ height: '2px', backgroundColor: '#c72e23' }} />
-                )}
-              </button>
-            </div>
-          </div>
-
-          {activeTab === 'build' && (
-            <>
-              {/* Drag hint */}
-              <div className="px-4 mb-3">
-                <p className="font-['Inter:Regular',sans-serif] font-normal" style={{ fontSize: '11px', color: '#c72e23' }}>
-                  Drag a visual onto the canvas
-                </p>
+            {/* Chart icon grid */}
+            <div className="px-3 mb-4">
+              <div className="grid grid-cols-6 gap-0.5">
+                {chartIconDefs.map((icon) => (
+                  <button
+                    key={icon.label}
+                    title={icon.label}
+                    className="flex items-center justify-center rounded-[5px] text-[#64748b] hover:bg-[#f1f5f9] hover:text-[#334155] transition-colors"
+                    style={{ width: '36px', height: '36px' }}
+                  >
+                    <span style={{ width: '18px', height: '18px', display: 'block' }}>
+                      <ChartIcon type={icon.d} />
+                    </span>
+                  </button>
+                ))}
               </div>
+            </div>
 
-              {/* Chart icon grid */}
-              <div className="px-3 mb-4">
-                <div className="grid grid-cols-6 gap-0.5">
-                  {chartIconDefs.map((icon) => (
-                    <button
-                      key={icon.label}
-                      title={icon.label}
-                      className="flex items-center justify-center rounded-[5px] text-[#64748b] hover:bg-[#f1f5f9] hover:text-[#334155] transition-colors"
-                      style={{ width: '36px', height: '36px' }}
-                    >
-                      <span style={{ width: '18px', height: '18px', display: 'block' }}>
-                        <ChartIcon type={icon.d} />
-                      </span>
-                    </button>
-                  ))}
-                </div>
+            {/* Values */}
+            <div className="px-4 py-3 border-t border-[#f1f5f9] border-b">
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="font-['Inter:Medium',sans-serif] font-medium" style={{ fontSize: '12px', color: '#475569' }}>Values</span>
+                <svg className="size-3 text-[#94a3b8]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <line x1="12" y1="5" x2="12" y2="19" strokeWidth="2" strokeLinecap="round" />
+                  <line x1="5" y1="12" x2="19" y2="12" strokeWidth="2" strokeLinecap="round" />
+                </svg>
               </div>
+              <button className="font-['Inter:Regular',sans-serif] font-normal hover:underline" style={{ fontSize: '12px', color: '#c72e23' }}>
+                + Add data fields here
+              </button>
+            </div>
 
-              {/* Values */}
-              <div className="px-4 py-3 border-t border-[#f1f5f9] border-b">
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="font-['Inter:Medium',sans-serif] font-medium" style={{ fontSize: '12px', color: '#475569' }}>Values</span>
-                  <svg className="size-3 text-[#94a3b8]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <line x1="12" y1="5" x2="12" y2="19" strokeWidth="2" strokeLinecap="round" />
-                    <line x1="5" y1="12" x2="19" y2="12" strokeWidth="2" strokeLinecap="round" />
-                  </svg>
+            {/* Drill through */}
+            <div className="px-4 py-3 border-b border-[#f1f5f9]">
+              <span className="font-['Inter:Medium',sans-serif] font-medium block mb-3" style={{ fontSize: '12px', color: '#475569' }}>Drill through</span>
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center justify-between">
+                  <span className="font-['Inter:Regular',sans-serif] font-normal" style={{ fontSize: '12px', color: '#334155' }}>Cross-report</span>
+                  <Toggle checked={drillCrossReport} onChange={() => setDrillCrossReport(!drillCrossReport)} />
                 </div>
-                <button className="font-['Inter:Regular',sans-serif] font-normal hover:underline" style={{ fontSize: '12px', color: '#c72e23' }}>
-                  + Add data fields here
+                <div className="flex items-center justify-between">
+                  <span className="font-['Inter:Regular',sans-serif] font-normal" style={{ fontSize: '12px', color: '#334155' }}>Keep all filters</span>
+                  <Toggle checked={drillKeepFilters} onChange={() => setDrillKeepFilters(!drillKeepFilters)} />
+                </div>
+                <button className="font-['Inter:Regular',sans-serif] font-normal hover:underline text-left" style={{ fontSize: '12px', color: '#c72e23' }}>
+                  Add drill-through fields here
                 </button>
               </div>
-
-              {/* Drill through */}
-              <div className="px-4 py-3 border-b border-[#f1f5f9]">
-                <span className="font-['Inter:Medium',sans-serif] font-medium block mb-3" style={{ fontSize: '12px', color: '#475569' }}>Drill through</span>
-                <div className="flex flex-col gap-3">
-                  <div className="flex items-center justify-between">
-                    <span className="font-['Inter:Regular',sans-serif] font-normal" style={{ fontSize: '12px', color: '#334155' }}>Cross-report</span>
-                    <Toggle checked={drillCrossReport} onChange={() => setDrillCrossReport(!drillCrossReport)} />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="font-['Inter:Regular',sans-serif] font-normal" style={{ fontSize: '12px', color: '#334155' }}>Keep all filters</span>
-                    <Toggle checked={drillKeepFilters} onChange={() => setDrillKeepFilters(!drillKeepFilters)} />
-                  </div>
-                  <button className="font-['Inter:Regular',sans-serif] font-normal hover:underline text-left" style={{ fontSize: '12px', color: '#c72e23' }}>
-                    Add drill-through fields here
-                  </button>
-                </div>
-              </div>
-            </>
-          )}
-
-          {activeTab === 'format' && (
-            <div className="px-4 py-8 text-center">
-              <svg className="size-10 text-[#cbd5e1] mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
-              </svg>
-              <p className="font-['Inter:Regular',sans-serif] font-normal" style={{ fontSize: '12px', color: '#94a3b8' }}>Select a visual to format</p>
             </div>
-          )}
-        </div>
+          </>
+        )}
+
+        {activeTab === 'format' && (
+          <div className="px-4 py-8 text-center">
+            <svg className="size-10 text-[#cbd5e1] mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+            </svg>
+            <p className="font-['Inter:Regular',sans-serif] font-normal" style={{ fontSize: '12px', color: '#94a3b8' }}>Select a visual to format</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -3523,7 +3538,7 @@ function MobileMenuButton({ onClick }: { onClick: () => void }) {
   );
 }
 
-function App({ onEditClick, onMenuClick, collapsed, onToggle, isFullscreen, onFullscreen, todayData, tomorrowData, todayDisplayDate, tomorrowDisplayDate, todayCount, tomorrowCount, todayUnits, tomorrowUnits, headers, isLoading }: { onEditClick: () => void; onMenuClick: () => void; collapsed: boolean; onToggle: () => void; isFullscreen: boolean; onFullscreen: () => void; todayData: any[]; tomorrowData: any[]; todayDisplayDate: string; tomorrowDisplayDate: string; todayCount: number; tomorrowCount: number; todayUnits: number; tomorrowUnits: number; headers?: string[]; isLoading: boolean }) {
+function App({ onEditClick, onMenuClick, collapsed, onToggle, isFullscreen, onFullscreen, todayData, tomorrowData, todayDisplayDate, tomorrowDisplayDate, todayCount, tomorrowCount, todayUnits, tomorrowUnits, headers, isLoading, location }: { onEditClick: () => void; onMenuClick: () => void; collapsed: boolean; onToggle: () => void; isFullscreen: boolean; onFullscreen: () => void; todayData: any[]; tomorrowData: any[]; todayDisplayDate: string; tomorrowDisplayDate: string; todayCount: number; tomorrowCount: number; todayUnits: number; tomorrowUnits: number; headers?: string[]; isLoading: boolean; location?: string }) {
   return (
     <div className="bg-[#f8fafc] h-screen overflow-hidden relative shrink-0 w-full flex" data-name="App">
       {/* Collapsible sidebar — desktop only, hidden in fullscreen */}
@@ -3532,13 +3547,15 @@ function App({ onEditClick, onMenuClick, collapsed, onToggle, isFullscreen, onFu
           <CollapsibleSidebar collapsed={collapsed} onToggle={onToggle} />
         </div>
       )}
-      <Container onEditClick={onEditClick} onMenuClick={onMenuClick} collapsed={collapsed} onToggle={onToggle} isFullscreen={isFullscreen} onFullscreen={onFullscreen} todayData={todayData} tomorrowData={tomorrowData} todayDisplayDate={todayDisplayDate} tomorrowDisplayDate={tomorrowDisplayDate} todayCount={todayCount} tomorrowCount={tomorrowCount} todayUnits={todayUnits} tomorrowUnits={tomorrowUnits} headers={headers} isLoading={isLoading} />
+      <Container onEditClick={onEditClick} onMenuClick={onMenuClick} collapsed={collapsed} onToggle={onToggle} isFullscreen={isFullscreen} onFullscreen={onFullscreen} todayData={todayData} tomorrowData={tomorrowData} todayDisplayDate={todayDisplayDate} tomorrowDisplayDate={tomorrowDisplayDate} todayCount={todayCount} tomorrowCount={tomorrowCount} todayUnits={todayUnits} tomorrowUnits={tomorrowUnits} headers={headers} isLoading={isLoading} location={location} />
     </div>
   );
 }
 
 export default function Mazzotta() {
+  const { location } = useParams();
   const [isEditOpen, setIsEditOpen] = useState(false);
+  // ... (rest of the component state and effects)
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -3546,6 +3563,10 @@ export default function Mazzotta() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    if (location) {
+      setIsLoading(false);
+      return;
+    }
     const fetchReservations = async () => {
       setIsLoading(true);
       try {
@@ -3557,8 +3578,12 @@ export default function Mazzotta() {
         setIsLoading(false);
       }
     };
+
     fetchReservations();
-  }, []);
+
+    const interval = setInterval(fetchReservations, 180000); // 3 minutes
+    return () => clearInterval(interval);
+  }, [location]);
 
   useEffect(() => {
     const handleFullscreenChange = () => {
@@ -3587,14 +3612,14 @@ export default function Mazzotta() {
     }
 
     return {
-      today: reservationData.data?.today || [],
-      tomorrow: reservationData.data?.tomorrow || [],
+      today: reservationData.data || [],
+      tomorrow: reservationData.data?.nextWorkDay || reservationData.data?.tomorrow || [],
       todayDate: reservationData.dashboard?.today?.dateLabel || '—',
-      tomorrowDate: reservationData.dashboard?.tomorrow?.dateLabel || '—',
+      tomorrowDate: reservationData.dashboard?.nextWorkDay?.dateLabel || reservationData.dashboard?.tomorrow?.dateLabel || '—',
       todayCount: reservationData.dashboard?.today?.count || 0,
-      tomorrowCount: reservationData.dashboard?.tomorrow?.count || 0,
+      tomorrowCount: reservationData.dashboard?.nextWorkDay?.count || reservationData.dashboard?.tomorrow?.count || 0,
       todayUnits: reservationData.dashboard?.today?.units || 0,
-      tomorrowUnits: reservationData.dashboard?.tomorrow?.units || 0,
+      tomorrowUnits: reservationData.dashboard?.nextWorkDay?.units || reservationData.dashboard?.tomorrow?.units || 0,
       headers: reservationData.headers || [],
     };
   }, [reservationData]);
@@ -3619,6 +3644,7 @@ export default function Mazzotta() {
         tomorrowUnits={groupedData.tomorrowUnits}
         headers={groupedData.headers}
         isLoading={isLoading}
+        location={location}
       />
 
       {/* Mobile sidebar overlay */}

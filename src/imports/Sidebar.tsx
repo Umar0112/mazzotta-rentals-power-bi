@@ -1,4 +1,5 @@
-import { useState, type ReactNode } from "react";
+import { useState, type ReactNode, useEffect } from "react";
+import { useNavigate, useParams } from "react-router";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import {
   List,
@@ -12,6 +13,7 @@ import {
   Building2,
 } from "lucide-react";
 import mazzottaLogo from "./mazzotta-logo.png";
+import { ApiService } from "../services/api/apiService";
 
 function cn(...classes: (string | boolean | undefined | null)[]) {
   return classes.filter(Boolean).join(" ");
@@ -25,12 +27,30 @@ interface SidebarProps {
 export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const [allLocOpen, setAllLocOpen] = useState(true);
   const [openLocs, setOpenLocs] = useState<Record<string, boolean>>({});
-  const [activeItem, setActiveItem] = useState("eyeball-all");
+  const [activeItem, setActiveItem] = useState("all-reservations");
+  const navigate = useNavigate();
+  const { location: routeLocation } = useParams();
+
+  useEffect(() => {
+    if (routeLocation) {
+      setActiveItem(`eyeball-${routeLocation}`);
+    } else {
+      // Logic for other routes if needed
+    }
+  }, [routeLocation]);
 
   const toggleLoc = (id: string) =>
     setOpenLocs((p) => ({ ...p, [id]: !p[id] }));
 
   const locations = ["0001", "0002", "0003", "0004", "0005"];
+  const eyeballLocations = ["all", "0001", "0002", "0003", "0004", "0005"];
+
+
+
+  const handleEyeballClick = (loc: string) => {
+    setActiveItem(`eyeball-${loc}`);
+    navigate(`/eyeball/${loc}`);
+  };
 
   return (
     <aside
@@ -157,25 +177,28 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                 label="All Reservations"
                 icon={<List className="w-3.5 h-3.5" />}
                 active={activeItem === "all-reservations"}
-                onClick={() => setActiveItem("all-reservations")}
+                onClick={() => {
+                  setActiveItem("all-reservations");
+                  navigate("/dashboard");
+                }}
               />
-              <SubNavItem
+              {/* <SubNavItem
                 label="All Contracts"
                 icon={<ScrollText className="w-3.5 h-3.5" />}
                 active={activeItem === "all-contracts"}
                 onClick={() => setActiveItem("all-contracts")}
-              />
-              <SubNavItem
+              /> */}
+              {/* <SubNavItem
                 label="Eyeball — All Locations"
                 icon={<Eye className="w-3.5 h-3.5" />}
                 active={activeItem === "eyeball-all"}
                 onClick={() => setActiveItem("eyeball-all")}
-              />
+              /> */}
             </div>
           </Collapsible.Content>
         </Collapsible.Root>
 
-        <SubNavItem
+        {/* <SubNavItem
           label="Combined Reservations"
           icon={<FileText className="w-3.5 h-3.5" />}
           active={activeItem === "combined"}
@@ -190,10 +213,10 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
           onClick={() => setActiveItem("6day")}
           padded
           collapsed={collapsed}
-        />
+        /> */}
 
         {/* LOCATIONS heading */}
-        <div
+        {/* <div
           className="px-1 overflow-hidden"
           style={{
             maxHeight: collapsed ? 0 : 48,
@@ -215,10 +238,10 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
           >
             Locations
           </span>
-        </div>
+        </div> */}
 
         {/* Divider shown only when collapsed */}
-        <div
+        {/* <div
           style={{
             maxHeight: collapsed ? 24 : 0,
             opacity: collapsed ? 1 : 0,
@@ -229,10 +252,10 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
           <div className="py-1">
             <div className="h-px bg-[#F1F5F9]" />
           </div>
-        </div>
+        </div> */}
 
         {/* Location items */}
-        {locations.map((loc) =>
+        {/* {locations.map((loc) =>
           collapsed ? (
             <button
               key={loc}
@@ -284,19 +307,58 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                     label="Reservations"
                     icon={<List className="w-3.5 h-3.5" />}
                     active={false}
-                    onClick={() => {}}
+                    onClick={() => { }}
                   />
                   <SubNavItem
                     label="Contracts"
                     icon={<ScrollText className="w-3.5 h-3.5" />}
                     active={false}
-                    onClick={() => {}}
+                    onClick={() => { }}
                   />
                 </div>
               </Collapsible.Content>
             </Collapsible.Root>
           )
-        )}
+        )} */}
+
+        {/* EYEBALL LOCATION heading */}
+        <div
+          className="px-1 overflow-hidden"
+          style={{
+            maxHeight: collapsed ? 0 : 48,
+            opacity: collapsed ? 0 : 1,
+            paddingTop: collapsed ? 0 : 16,
+            paddingBottom: collapsed ? 0 : 6,
+            transition: "max-height 0.22s ease, opacity 0.18s ease, padding 0.22s ease",
+          }}
+        >
+          <span
+            style={{
+              fontSize: "10px",
+              fontWeight: 700,
+              lineHeight: "14px",
+              letterSpacing: "0.09em",
+              color: "#94A3B8",
+            }}
+            className="uppercase select-none whitespace-nowrap"
+          >
+            Eyeball Location
+          </span>
+        </div>
+
+        {/* Eyeball items */}
+        {eyeballLocations.map((loc) => (
+          <SubNavItem
+            key={loc}
+            label={loc === "all" ? "Eyeball location for All" : `Eyeball location ${loc}`}
+            icon={<Eye className="w-3.5 h-3.5" />}
+            active={activeItem === `eyeball-${loc}`}
+            onClick={() => handleEyeballClick(loc)}
+            padded
+            collapsed={collapsed}
+          />
+        ))}
+
       </nav>
 
       {/* Bottom (Settings + User) */}
