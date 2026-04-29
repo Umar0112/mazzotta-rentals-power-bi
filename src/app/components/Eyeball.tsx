@@ -32,7 +32,7 @@ const GenericTable = ({ data, headers }: { data: any[]; headers?: string[] }) =>
         <thead className="sticky top-0 z-10">
           <tr className="bg-[#f8fafc] shadow-[0_1px_0_0_#f1f5f9]">
             {tableHeaders.map((h, i) => (
-              <th key={i} className={`px-[12px] py-[10px] font-['Inter:Bold',sans-serif] font-bold text-[12px] text-[#94a3b8] tracking-[0.7px] uppercase whitespace-nowrap ${['Units', 'Rental Days', 'UNITS', 'DAYS'].includes(h) ? 'text-center' : 'text-left'}`}>
+              <th key={i} className={`px-[12px] py-[6px] font-['Inter:Bold',sans-serif] font-bold text-[12px] text-[#94a3b8] tracking-[0.7px] uppercase whitespace-nowrap ${['Units', 'Rental Days', 'UNITS', 'DAYS'].includes(h) ? 'text-center' : 'text-left'}`}>
                 {h}
               </th>
             ))}
@@ -40,7 +40,7 @@ const GenericTable = ({ data, headers }: { data: any[]; headers?: string[] }) =>
         </thead>
         <tbody>
           {data.map((row, rowIndex) => (
-            <tr key={rowIndex} className={`${rowIndex % 2 === 1 ? 'bg-[#fafafa]' : 'bg-white'} border-b border-[#f8fafc] hover:bg-slate-50 transition-colors`} style={{ height: '60px' }}>
+            <tr key={rowIndex} className={`${rowIndex % 2 === 1 ? 'bg-[#fafafa]' : 'bg-white'} border-b border-[#f8fafc] hover:bg-slate-50 transition-colors`} style={{ height: '38px' }}>
               {tableHeaders.map((h, colIndex) => {
                 const rawValue = row[h];
                 const value = typeof rawValue === 'string' ? rawValue.trim() : rawValue;
@@ -51,7 +51,7 @@ const GenericTable = ({ data, headers }: { data: any[]; headers?: string[] }) =>
                 const isNotes = h.toLowerCase() === 'notes';
 
                 return (
-                  <td key={colIndex} className={`px-[12px] py-[8px] whitespace-nowrap ${['Units', 'Rental Days', 'UNITS', 'DAYS'].includes(h) ? 'text-center' : ''}`}>
+                  <td key={colIndex} className={`px-[12px] py-[6px] whitespace-nowrap ${['Units', 'Rental Days', 'UNITS', 'DAYS'].includes(h) ? 'text-center' : ''}`}>
                     {isItemNum && (value === null || value === '') ? (
                       <span className="inline-flex items-center bg-[#fef2f2] border border-[#fecaca] rounded-[4px] px-[5px] py-[1px] font-['Inter:Bold',sans-serif] font-bold text-[12px] text-[#c72e23] whitespace-nowrap">OPEN</span>
                     ) : isRep && value && value.toString().length > 10 ? ( // If REP is a long name, maybe just show text
@@ -59,12 +59,12 @@ const GenericTable = ({ data, headers }: { data: any[]; headers?: string[] }) =>
                     ) : isRep ? (
                       <span className="inline-flex items-center bg-[#f1f5f9] rounded-[4px] px-[5px] py-[1px] font-['Inter:Semi_Bold',sans-serif] font-semibold text-[12px] text-[#334155] whitespace-nowrap">{value}</span>
                     ) : isNotes ? (
-                      <span 
+                      <span
                         className="font-['Inter:Medium',sans-serif] font-medium text-[13px] text-[#475569]"
                         title={value?.toString()}
                       >
-                        {value && value.toString().length > 50 
-                          ? `${value.toString().substring(0, 50)}...` 
+                        {value && value.toString().length > 50
+                          ? `${value.toString().substring(0, 50)}...`
                           : (value ?? '—')}
                       </span>
                     ) : (
@@ -146,17 +146,17 @@ const Eyeball: React.FC<EyeballProps> = ({ location }) => {
     };
 
     fetchData();
-    
+
     const interval = setInterval(fetchData, 180000); // 3 minutes
     return () => clearInterval(interval);
   }, [location]);
 
   const groupedData = useMemo(() => {
     if (!data) return null;
-    
+
     const todayReservations = data.data?.today || [];
     const nextWorkDayReservations = data.data?.nextWorkDay || [];
-    
+
     return {
       today: todayReservations,
       nextWorkDay: nextWorkDayReservations,
@@ -193,7 +193,7 @@ const Eyeball: React.FC<EyeballProps> = ({ location }) => {
         </div>
         <h3 className="font-['Inter:Semi_Bold',sans-serif] font-semibold text-slate-900 text-lg mb-2">Connection Failed</h3>
         <p className="text-slate-500 max-w-md mb-6">{error}</p>
-        <button 
+        <button
           onClick={() => window.location.reload()}
           className="bg-[#c72e23] text-white px-6 py-2 rounded-lg font-medium hover:bg-[#b0281f] transition-colors shadow-sm"
         >
@@ -217,20 +217,20 @@ const Eyeball: React.FC<EyeballProps> = ({ location }) => {
           nextDayUnits={groupedData.nextWorkDayUnits}
         />
       </div>
-      
+
       <div className="flex-1 min-h-0 flex flex-col gap-[20px] pb-6 no-scrollbar overflow-y-auto">
-        <DynamicReservationTable 
-          title={groupedData.todaySectionLabel} 
-          date={groupedData.todayDate} 
-          data={groupedData.today} 
-          headers={groupedData.headers} 
+        <DynamicReservationTable
+          title={groupedData.todaySectionLabel}
+          date={groupedData.todayDate}
+          data={groupedData.today}
+          headers={groupedData.headers}
         />
-        
-        <DynamicReservationTable 
-          title={groupedData.nextWorkDaySectionLabel} 
-          date={groupedData.nextWorkDayDate} 
-          data={groupedData.nextWorkDay} 
-          headers={groupedData.headers} 
+
+        <DynamicReservationTable
+          title={groupedData.nextWorkDaySectionLabel}
+          date={groupedData.nextWorkDayDate}
+          data={groupedData.nextWorkDay}
+          headers={groupedData.headers}
         />
       </div>
     </div>

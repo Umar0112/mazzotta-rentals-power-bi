@@ -33,7 +33,7 @@ const GenericTable = ({ data, headers }: { data: any[]; headers?: string[] }) =>
         <thead className="sticky top-0 z-10">
           <tr className="bg-[#f8fafc] shadow-[0_1px_0_0_#f1f5f9]">
             {tableHeaders.map((h, i) => (
-              <th key={i} className={`px-[12px] py-[10px] font-['Inter:Bold',sans-serif] font-bold text-[12px] text-[#94a3b8] tracking-[0.7px] uppercase whitespace-nowrap ${['Units', 'Rental Days', 'UNITS', 'DAYS'].includes(h) ? 'text-center' : 'text-left'}`}>
+              <th key={i} className={`px-[12px] py-[8px] font-['Inter:Bold',sans-serif] font-bold text-[12px] text-[#94a3b8] tracking-[0.7px] uppercase whitespace-nowrap ${['Units', 'Rental Days', 'UNITS', 'DAYS'].includes(h) ? 'text-center' : 'text-left'}`}>
                 {h}
               </th>
             ))}
@@ -41,7 +41,7 @@ const GenericTable = ({ data, headers }: { data: any[]; headers?: string[] }) =>
         </thead>
         <tbody>
           {data.map((row, rowIndex) => (
-            <tr key={rowIndex} className={`${rowIndex % 2 === 1 ? 'bg-[#fafafa]' : 'bg-white'} border-b border-[#f8fafc] hover:bg-slate-50 transition-colors`} style={{ height: '60px' }}>
+            <tr key={rowIndex} className={`${rowIndex % 2 === 1 ? 'bg-[#fafafa]' : 'bg-white'} border-b border-[#f8fafc] hover:bg-slate-50 transition-colors`} style={{ height: '38px' }}>
               {tableHeaders.map((h, colIndex) => {
                 const rawValue = row[h];
                 const value = typeof rawValue === 'string' ? rawValue.trim() : rawValue;
@@ -51,7 +51,7 @@ const GenericTable = ({ data, headers }: { data: any[]; headers?: string[] }) =>
                 const isOut = h === 'OUT' || h === 'Rental Days' || h === 'Date Out';
 
                 return (
-                  <td key={colIndex} className={`px-[12px] py-[8px] whitespace-nowrap ${['Units', 'Rental Days', 'UNITS', 'DAYS'].includes(h) ? 'text-center' : ''}`}>
+                  <td key={colIndex} className={`px-[12px] py-[6px] whitespace-nowrap ${['Units', 'Rental Days', 'UNITS', 'DAYS'].includes(h) ? 'text-center' : ''}`}>
                     {isItemNum && (value === null || value === '' || value === 'OPEN') ? (
                       <span className="inline-flex items-center bg-[#fef2f2] border border-[#fecaca] rounded-[4px] px-[5px] py-[1px] font-['Inter:Bold',sans-serif] font-bold text-[12px] text-[#c72e23] whitespace-nowrap">OPEN</span>
                     ) : isRep ? (
