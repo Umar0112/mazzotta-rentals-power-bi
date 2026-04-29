@@ -1,5 +1,5 @@
-import { useState, type ReactNode, useEffect } from "react";
-import { useNavigate, useParams } from "react-router";
+import { useState, type ReactNode, useEffect, useMemo } from "react";
+import { useNavigate, useParams, useLocation } from "react-router";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import {
   List,
@@ -11,6 +11,7 @@ import {
   FileText,
   MapPin,
   Building2,
+  BarChart3,
 } from "lucide-react";
 import mazzottaLogo from "./mazzotta-logo.png";
 import { ApiService } from "../services/api/apiService";
@@ -22,22 +23,61 @@ function cn(...classes: (string | boolean | undefined | null)[]) {
 interface SidebarProps {
   collapsed: boolean;
   onToggle: () => void;
+  width: number;
+  onWidthChange: (width: number) => void;
 }
 
-export function Sidebar({ collapsed, onToggle }: SidebarProps) {
+export function Sidebar({ collapsed, onToggle, width, onWidthChange }: SidebarProps) {
   const [allLocOpen, setAllLocOpen] = useState(true);
   const [openLocs, setOpenLocs] = useState<Record<string, boolean>>({});
-  const [activeItem, setActiveItem] = useState("all-reservations");
+  const [isResizing, setIsResizing] = useState(false);
   const navigate = useNavigate();
-  const { location: routeLocation } = useParams();
+  const { location: routeLocation, reportType: routeReportType } = useParams();
+  const { pathname } = useLocation();
+
+  const activeItem = useMemo(() => {
+    if (pathname.startsWith("/equipment-qty-report")) {
+      const parts = pathname.split("/");
+      if (parts.length > 2) return `location-${parts[2]}-equipment-qty`;
+      return "equipment-qty-report";
+    }
+    if (pathname.startsWith("/combined-equipment-qty-report")) {
+      const parts = pathname.split("/");
+      if (parts.length > 2) return `location-${parts[2]}-combined-equipment`;
+      return "combined-equipment-qty-report";
+    }
+    if (routeLocation && routeReportType) return `location-${routeLocation}-${routeReportType}`;
+    if (routeLocation) return `eyeball-${routeLocation}`;
+    if (pathname === "/dashboard") return "all-reservations";
+    if (pathname === "/all-contracts") return "all-contracts";
+    if (pathname === "/all-reservations-contracts") return "all-reservations-contracts";
+    if (pathname === "/res-contracts-1-day") return "res-contracts-1-day";
+    if (pathname === "/res-contracts-2-days") return "res-contracts-2-days";
+    if (pathname === "/res-contracts-3-days") return "res-contracts-3-days";
+    if (pathname === "/res-contracts-4-days") return "res-contracts-4-days";
+    if (pathname === "/res-contracts-5-days") return "res-contracts-5-days";
+    return "";
+  }, [routeLocation, routeReportType, pathname]);
 
   useEffect(() => {
-    if (routeLocation) {
-      setActiveItem(`eyeball-${routeLocation}`);
-    } else {
-      // Logic for other routes if needed
-    }
-  }, [routeLocation]);
+    if (!isResizing) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const newWidth = Math.min(Math.max(e.clientX, 160), 400);
+      onWidthChange(newWidth);
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [isResizing]);
 
   const toggleLoc = (id: string) =>
     setOpenLocs((p) => ({ ...p, [id]: !p[id] }));
@@ -45,24 +85,31 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const locations = ["0001", "0002", "0003", "0004", "0005"];
   const eyeballLocations = ["all", "0001", "0002", "0003", "0004", "0005"];
 
-
-
   const handleEyeballClick = (loc: string) => {
-    setActiveItem(`eyeball-${loc}`);
     navigate(`/eyeball/${loc}`);
   };
 
+  const currentWidth = collapsed ? 60 : width;
+
   return (
     <aside
-      className="bg-white flex flex-col h-full shrink-0 relative overflow-hidden"
+      className="bg-white flex flex-col h-full shrink-0 relative overflow-hidden group/sidebar"
       style={{
-        width: collapsed ? "60px" : "248px",
-        minWidth: collapsed ? "60px" : "248px",
-        transition: "width 0.28s cubic-bezier(0.4,0,0.2,1), min-width 0.28s cubic-bezier(0.4,0,0.2,1)",
+        width: `${currentWidth}px`,
+        minWidth: `${currentWidth}px`,
+        transition: isResizing ? "none" : "width 0.28s cubic-bezier(0.4,0,0.2,1), min-width 0.28s cubic-bezier(0.4,0,0.2,1)",
         borderRight: "1px solid rgba(216,224,236,0.5)",
         willChange: "width",
       }}
     >
+      {/* Resize handle */}
+      {!collapsed && (
+        <div
+          className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-[#C72E23]/20 active:bg-[#C72E23]/40 z-50 transition-colors"
+          onMouseDown={() => setIsResizing(true)}
+        />
+      )}
+
       {/* Logo / Toggle */}
       <div
         className="flex items-center h-[60px] shrink-0 relative"
@@ -145,7 +192,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                 )}
               />
               <span
-                className="flex-1 text-left whitespace-nowrap overflow-hidden"
+                className="flex-1 text-left whitespace-nowrap overflow-hidden text-ellipsis"
                 style={{
                   fontSize: "13px",
                   fontWeight: 500,
@@ -155,7 +202,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                   transition: "opacity 0.18s ease, max-width 0.22s ease",
                 }}
               >
-                All Locations
+                Reservations & Contracts
               </span>
               <ChevronDown
                 className={cn(
@@ -173,27 +220,68 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
           </Collapsible.Trigger>
           <Collapsible.Content className="overflow-hidden data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0">
             <div className="ml-2 mt-0.5 flex flex-col gap-0.5 pl-3 border-l-2 border-[#F1F5F9]">
-              <SubNavItem
+              {/* <SubNavItem
                 label="All Reservations"
                 icon={<List className="w-3.5 h-3.5" />}
                 active={activeItem === "all-reservations"}
-                onClick={() => {
-                  setActiveItem("all-reservations");
-                  navigate("/dashboard");
-                }}
+                onClick={() => navigate("/dashboard")}
               />
-              {/* <SubNavItem
+              <SubNavItem
                 label="All Contracts"
                 icon={<ScrollText className="w-3.5 h-3.5" />}
                 active={activeItem === "all-contracts"}
-                onClick={() => setActiveItem("all-contracts")}
+                onClick={() => navigate("/all-contracts")}
               /> */}
-              {/* <SubNavItem
-                label="Eyeball — All Locations"
-                icon={<Eye className="w-3.5 h-3.5" />}
-                active={activeItem === "eyeball-all"}
-                onClick={() => setActiveItem("eyeball-all")}
-              /> */}
+              <SubNavItem
+                label="All Reservations & Contracts"
+                icon={<FileText className="w-3.5 h-3.5" />}
+                active={activeItem === "all-reservations-contracts"}
+                onClick={() => navigate("/all-reservations-contracts")}
+              />
+              <SubNavItem
+                label="Reservations & Contracts 1 Days"
+                icon={<CalendarRange className="w-3.5 h-3.5" />}
+                active={activeItem === "res-contracts-1-day"}
+                onClick={() => navigate("/res-contracts-1-day")}
+              />
+              <SubNavItem
+                label="Reservations & Contracts 2 Days"
+                icon={<CalendarRange className="w-3.5 h-3.5" />}
+                active={activeItem === "res-contracts-2-days"}
+                onClick={() => navigate("/res-contracts-2-days")}
+              />
+              <SubNavItem
+                label="Reservations & Contracts 3 Days"
+                icon={<CalendarRange className="w-3.5 h-3.5" />}
+                active={activeItem === "res-contracts-3-days"}
+                onClick={() => navigate("/res-contracts-3-days")}
+              />
+              <SubNavItem
+                label="Reservations & Contracts 4 Days"
+                icon={<CalendarRange className="w-3.5 h-3.5" />}
+                active={activeItem === "res-contracts-4-days"}
+                onClick={() => navigate("/res-contracts-4-days")}
+              />
+              <SubNavItem
+                label="Reservations & Contracts 5 Days"
+                icon={<CalendarRange className="w-3.5 h-3.5" />}
+                active={activeItem === "res-contracts-5-days"}
+                onClick={() => navigate("/res-contracts-5-days")}
+              />
+              <SubNavItem
+                label="Equipment Qty Next 6 Days"
+                icon={<BarChart3 className="w-3.5 h-3.5" />}
+                active={activeItem === "equipment-qty-report"}
+                onClick={() => navigate("/equipment-qty-report")}
+                collapsed={collapsed}
+              />
+              <SubNavItem
+                label="Combined Equipment Qty"
+                icon={<BarChart3 className="w-3.5 h-3.5" />}
+                active={activeItem === "combined-equipment-qty-report"}
+                onClick={() => navigate("/combined-equipment-qty-report")}
+                collapsed={collapsed}
+              />
             </div>
           </Collapsible.Content>
         </Collapsible.Root>
@@ -209,14 +297,8 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
         <SubNavItem
           label="6-Day Summary"
           icon={<CalendarRange className="w-3.5 h-3.5" />}
-          active={activeItem === "6day"}
-          onClick={() => setActiveItem("6day")}
-          padded
-          collapsed={collapsed}
-        /> */}
-
         {/* LOCATIONS heading */}
-        {/* <div
+        <div
           className="px-1 overflow-hidden"
           style={{
             maxHeight: collapsed ? 0 : 48,
@@ -238,10 +320,10 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
           >
             Locations
           </span>
-        </div> */}
+        </div>
 
         {/* Divider shown only when collapsed */}
-        {/* <div
+        <div
           style={{
             maxHeight: collapsed ? 24 : 0,
             opacity: collapsed ? 1 : 0,
@@ -252,10 +334,10 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
           <div className="py-1">
             <div className="h-px bg-[#F1F5F9]" />
           </div>
-        </div> */}
+        </div>
 
         {/* Location items */}
-        {/* {locations.map((loc) =>
+        {locations.map((loc) =>
           collapsed ? (
             <button
               key={loc}
@@ -301,25 +383,55 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                   />
                 </button>
               </Collapsible.Trigger>
-              <Collapsible.Content className="overflow-hidden data-[state=open]:animate-in data-[state=closed]:animate-out">
+              <Collapsible.Content className="overflow-hidden data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0">
                 <div className="ml-2 mt-0.5 flex flex-col gap-0.5 pl-3 border-l-2 border-[#F1F5F9] pb-1">
                   <SubNavItem
-                    label="Reservations"
+                    label="Today Res. & Contracts"
                     icon={<List className="w-3.5 h-3.5" />}
-                    active={false}
-                    onClick={() => { }}
+                    active={activeItem === `location-${loc}-today`}
+                    onClick={() => navigate(`/location-report/${loc}/today`)}
                   />
                   <SubNavItem
-                    label="Contracts"
-                    icon={<ScrollText className="w-3.5 h-3.5" />}
-                    active={false}
-                    onClick={() => { }}
+                    label="Next Day Res. & Contracts"
+                    icon={<CalendarRange className="w-3.5 h-3.5" />}
+                    active={activeItem === `location-${loc}-next-work-day`}
+                    onClick={() => navigate(`/location-report/${loc}/next-work-day`)}
+                  />
+                  <SubNavItem
+                    label="Day 2 Res. & Contracts"
+                    icon={<CalendarRange className="w-3.5 h-3.5" />}
+                    active={activeItem === `location-${loc}-day-2`}
+                    onClick={() => navigate(`/location-report/${loc}/day-2`)}
+                  />
+                  <SubNavItem
+                    label="Day 3 Res. & Contracts"
+                    icon={<CalendarRange className="w-3.5 h-3.5" />}
+                    active={activeItem === `location-${loc}-day-3`}
+                    onClick={() => navigate(`/location-report/${loc}/day-3`)}
+                  />
+                  <SubNavItem
+                    label="Day 4 Res. & Contracts"
+                    icon={<CalendarRange className="w-3.5 h-3.5" />}
+                    active={activeItem === `location-${loc}-day-4`}
+                    onClick={() => navigate(`/location-report/${loc}/day-4`)}
+                  />
+                  <SubNavItem
+                    label="Day 5 Res. & Contracts"
+                    icon={<CalendarRange className="w-3.5 h-3.5" />}
+                    active={activeItem === `location-${loc}-day-5`}
+                    onClick={() => navigate(`/location-report/${loc}/day-5`)}
+                  />
+                  <SubNavItem
+                    label="Combined Equipment Qty"
+                    icon={<BarChart3 className="w-3.5 h-3.5" />}
+                    active={activeItem === `location-${loc}-combined-equipment`}
+                    onClick={() => navigate(`/combined-equipment-qty-report/${loc}`)}
                   />
                 </div>
               </Collapsible.Content>
             </Collapsible.Root>
           )
-        )} */}
+        )}
 
         {/* EYEBALL LOCATION heading */}
         <div
@@ -468,6 +580,7 @@ function NavItem({
   return (
     <button
       onClick={onClick}
+      title={label}
       className={cn(
         "w-full flex items-center px-3 py-[8px] rounded-[10px] transition-colors",
         collapsed ? "justify-center px-0 gap-0" : "gap-3",
@@ -517,6 +630,7 @@ function SubNavItem({
   return (
     <button
       onClick={onClick}
+      title={label}
       className={cn(
         "w-full flex items-center py-[7px] rounded-[8px] transition-colors text-left",
         padded ? "px-3" : "px-2",

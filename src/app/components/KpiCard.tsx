@@ -8,18 +8,19 @@ interface KpiPanelProps {
   title: string;
   count: number | string;
   units: number | string;
-  /** Adds a left divider border (used for the right panel) */
+  /** Adds a left divider border (used for panels after the first) */
   bordered?: boolean;
+  headerColor?: string;
 }
 
-function KpiPanel({ title, count, units, bordered = false }: KpiPanelProps) {
+function KpiPanel({ title, count, units, bordered = false, headerColor = "#c72e23" }: KpiPanelProps) {
   return (
     <div
       className="flex flex-[1_0_0] flex-col items-start min-w-0 relative self-stretch"
       style={bordered ? { borderLeft: "1px solid #e8edf3" } : undefined}
     >
-      {/* Red header */}
-      <div className="bg-[#c72e23] relative shrink-0 w-full">
+      {/* Header */}
+      <div className="relative shrink-0 w-full" style={{ backgroundColor: headerColor }}>
         {bordered && (
           <div
             aria-hidden="true"
@@ -46,7 +47,6 @@ function KpiPanel({ title, count, units, bordered = false }: KpiPanelProps) {
       <div className="flex items-stretch w-full">
         {/* Count column */}
         <div className="flex flex-[1_0_0] flex-col items-start min-w-0">
-          {/* Label */}
           <div
             className="h-[40px] relative w-full flex flex-col items-center justify-center"
             style={{ borderBottom: "1px solid #e8edf3" }}
@@ -63,7 +63,6 @@ function KpiPanel({ title, count, units, bordered = false }: KpiPanelProps) {
               Count
             </span>
           </div>
-          {/* Value */}
           <div className="h-[50px] w-full flex flex-col items-center justify-center px-2 py-[8px]">
             <span
               className="text-[#1a1a1a] text-center whitespace-nowrap"
@@ -84,7 +83,6 @@ function KpiPanel({ title, count, units, bordered = false }: KpiPanelProps) {
           className="flex flex-[1_0_0] flex-col items-start min-w-0"
           style={{ borderLeft: "1px solid #e8edf3" }}
         >
-          {/* Label */}
           <div
             className="h-[40px] relative w-full flex flex-col items-center justify-center"
             style={{ borderBottom: "1px solid #e8edf3" }}
@@ -101,7 +99,6 @@ function KpiPanel({ title, count, units, bordered = false }: KpiPanelProps) {
               Units
             </span>
           </div>
-          {/* Value */}
           <div
             className="h-[50px] w-full flex flex-col items-center justify-center px-2 py-[8px]"
           >
@@ -125,14 +122,18 @@ function KpiPanel({ title, count, units, bordered = false }: KpiPanelProps) {
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 export interface KpiCardProps {
-  /** Label + date for the left (Today) panel, e.g. "Reservations Today - All Locations (04/14/2026)" */
+  /** Label + date for the left panel */
   todayTitle: string;
   todayCount: number | string;
   todayUnits: number | string;
-  /** Label + date for the right (Next Work Day) panel */
+  /** Label + date for the middle panel */
   nextDayTitle: string;
   nextDayCount: number | string;
   nextDayUnits: number | string;
+  /** Optional Label + date for the third panel */
+  totalTitle?: string;
+  totalCount?: number | string;
+  totalUnits?: number | string;
 }
 
 // ─── KpiCard (the exported component) ────────────────────────────────────────
@@ -143,10 +144,12 @@ export function KpiCard({
   nextDayTitle,
   nextDayCount,
   nextDayUnits,
+  totalTitle,
+  totalCount,
+  totalUnits,
 }: KpiCardProps) {
   return (
     <div className="bg-white relative rounded-[12px] w-full" data-name="KpiCard">
-      {/* Overflow clip keeps panels inside the rounded corners */}
       <div className="overflow-clip rounded-[inherit] w-full">
         <div className="flex items-start w-full">
           <KpiPanel
@@ -160,9 +163,16 @@ export function KpiCard({
             units={nextDayUnits}
             bordered
           />
+          {totalTitle !== undefined && (
+            <KpiPanel
+              title={totalTitle}
+              count={totalCount ?? 0}
+              units={totalUnits ?? 0}
+              bordered
+            />
+          )}
         </div>
       </div>
-      {/* Border + shadow overlay */}
       <div
         aria-hidden="true"
         className="absolute inset-0 pointer-events-none rounded-[12px]"

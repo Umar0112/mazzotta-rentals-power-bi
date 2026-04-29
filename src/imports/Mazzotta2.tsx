@@ -4,8 +4,12 @@ import mazzottaLogo from "./mazzotta-logo.png";
 import { Sidebar as CollapsibleSidebar } from "./Sidebar";
 import { KpiCard } from "../app/components/KpiCard";
 import { authService } from '../services/authService/authService';
-import { useParams } from 'react-router';
+import { useParams, useLocation } from 'react-router';
 import Eyeball from '../app/components/Eyeball';
+import ReservationAndContractView from '../app/components/ReservationAndContractView';
+import LocationReservationView from '../app/components/LocationReservationView';
+import EquipmentQtyReportView from '../app/components/EquipmentQtyReportView';
+import CombinedEquipmentQtyReportView from '../app/components/CombinedEquipmentQtyReportView';
 
 const formatApiDate = (dateStr: string) => {
   if (!dateStr || dateStr.length !== 8) return dateStr;
@@ -32,7 +36,7 @@ const GenericTable = ({ data, headers }: { data: any[]; headers?: string[] }) =>
         <thead className="sticky top-0 z-10">
           <tr className="bg-[#f8fafc] shadow-[0_1px_0_0_#f1f5f9]">
             {tableHeaders.map((h, i) => (
-              <th key={i} className={`px-[12px] py-[10px] font-['Inter:Bold',sans-serif] font-bold text-[12px] text-[#94a3b8] tracking-[0.7px] uppercase whitespace-nowrap ${['Units', 'Rental Days', 'UNITS', 'DAYS'].includes(h) ? 'text-center' : 'text-left'}`}>
+              <th key={i} className={`px-[12px] py-[5px] font-['Inter:Bold',sans-serif] font-bold text-[12px] text-[#94a3b8] tracking-[0.7px] uppercase whitespace-nowrap ${['Units', 'Rental Days', 'UNITS', 'DAYS'].includes(h) ? 'text-center' : 'text-left'}`}>
                 {h}
               </th>
             ))}
@@ -40,7 +44,7 @@ const GenericTable = ({ data, headers }: { data: any[]; headers?: string[] }) =>
         </thead>
         <tbody>
           {data.map((row, rowIndex) => (
-            <tr key={rowIndex} className={`${rowIndex % 2 === 1 ? 'bg-[#fafafa]' : 'bg-white'} border-b border-[#f8fafc] hover:bg-slate-50 transition-colors`} style={{ height: '60px' }}>
+            <tr key={rowIndex} className={`${rowIndex % 2 === 1 ? 'bg-[#fafafa]' : 'bg-white'} border-b border-[#f8fafc] hover:bg-slate-50 transition-colors`} style={{ height: '38px' }}>
               {tableHeaders.map((h, colIndex) => {
                 const rawValue = row[h];
                 const value = typeof rawValue === 'string' ? rawValue.trim() : rawValue;
@@ -50,7 +54,7 @@ const GenericTable = ({ data, headers }: { data: any[]; headers?: string[] }) =>
                 const isOut = h === 'OUT' || h === 'Rental Days';
 
                 return (
-                  <td key={colIndex} className={`px-[12px] py-[8px] whitespace-nowrap ${['Units', 'Rental Days', 'UNITS', 'DAYS'].includes(h) ? 'text-center' : ''}`}>
+                  <td key={colIndex} className={`px-[12px] py-[6px] whitespace-nowrap ${['Units', 'Rental Days', 'UNITS', 'DAYS'].includes(h) ? 'text-center' : ''}`}>
                     {isItemNum && (value === null || value === '') ? (
                       <span className="inline-flex items-center bg-[#fef2f2] border border-[#fecaca] rounded-[4px] px-[5px] py-[1px] font-['Inter:Bold',sans-serif] font-bold text-[12px] text-[#c72e23] whitespace-nowrap">OPEN</span>
                     ) : isRep ? (
@@ -1164,7 +1168,7 @@ function TableCard1() {
         </thead>
         <tbody>
           {rows.map((row, i) => (
-            <tr key={i} className={`${row.bg} border-b border-[#f8fafc]`} style={{ height: '32px' }}>
+            <tr key={i} className={`${row.bg} border-b border-[#f8fafc]`} style={{ height: '38px' }}>
               <td className="px-[12px] py-[5px] whitespace-nowrap">
                 <span className="font-['Inter:Medium',sans-serif] font-medium text-[11px] text-[#0f172a]">{row.name}</span>
                 <span className="font-['Inter:Regular',sans-serif] font-normal text-[11px] text-[#94a3b8] ml-[6px]">{row.code}</span>
@@ -2094,7 +2098,7 @@ function TableCard3() {
         </thead>
         <tbody>
           {rows.map((row, i) => (
-            <tr key={i} className={`${row.bg} border-b border-[#f8fafc]`} style={{ height: '32px' }}>
+            <tr key={i} className={`${row.bg} border-b border-[#f8fafc]`} style={{ height: '38px' }}>
               <td className="px-[12px] py-[5px] whitespace-nowrap">
                 <span className="font-['Inter:Medium',sans-serif] font-medium text-[11px] text-[#0f172a]">{row.name}</span>
                 <span className="font-['Inter:Regular',sans-serif] font-normal text-[11px] text-[#94a3b8] ml-[6px]">{row.code}</span>
@@ -2194,36 +2198,86 @@ function Container6({ todayData, tomorrowData, todayDisplayDate, tomorrowDisplay
   );
 }
 
-function Container5({ isFullscreen, todayData, tomorrowData, todayDisplayDate, tomorrowDisplayDate, todayCount, tomorrowCount, todayUnits, tomorrowUnits, headers, isLoading, location }: { isFullscreen: boolean; todayData: any[]; tomorrowData: any[]; todayDisplayDate: string; tomorrowDisplayDate: string; todayCount: number; tomorrowCount: number; todayUnits: number; tomorrowUnits: number; headers?: string[]; isLoading: boolean; location?: string }) {
+function Container5({ isFullscreen, todayData, tomorrowData, todayDisplayDate, tomorrowDisplayDate, todayCount, tomorrowCount, todayUnits, tomorrowUnits, headers, isLoading, location, path, reportType }: { isFullscreen: boolean; todayData: any[]; tomorrowData: any[]; todayDisplayDate: string; tomorrowDisplayDate: string; todayCount: number; tomorrowCount: number; todayUnits: number; tomorrowUnits: number; headers?: string[]; isLoading: boolean; location?: string; path?: string; reportType?: string }) {
+  const renderContent = () => {
+    // 1. Check for equipment reports FIRST (they have higher priority than generic location views)
+    if (path?.startsWith('/equipment-qty-report')) {
+      const displayTitle = location ? `Equipment Qty Next 6 Working Days - Location ${location}` : "Equipment Qty Next 6 Working Days";
+      return <EquipmentQtyReportView location={location} title={displayTitle} />;
+    }
+    if (path?.startsWith('/combined-equipment-qty-report')) {
+      const displayTitle = location ? `Combined Equipment Qty Next 6 Working Days - Location ${location}` : "Combined Equipment Qty Next 6 Working Days";
+      return <CombinedEquipmentQtyReportView location={location} title={displayTitle} />;
+    }
+
+    // 2. Dynamic location reports (Today, Next Day, etc.)
+    if (location && reportType) {
+      let title = "";
+      switch (reportType) {
+        case "today": title = "Today Reservations & Contracts"; break;
+        case "next-work-day": title = "Next Day Reservations & Contracts"; break;
+        case "day-2": title = "Day 2 Reservations & Contracts"; break;
+        case "day-3": title = "Day 3 Reservations & Contracts"; break;
+        case "day-4": title = "Day 4 Reservations & Contracts"; break;
+        case "day-5": title = "Day 5 Reservations & Contracts"; break;
+        case "next-6-days-summary": title = "6-Day Summary"; break;
+      }
+      return <LocationReservationView location={location} type={reportType as any} title={`${title} - Location ${location}`} />;
+    }
+
+    // 3. Default Location view (Eyeball)
+    if (location) {
+      return (
+        <div className="flex-1 p-6 overflow-auto">
+          <Eyeball location={location} />
+        </div>
+      );
+    }
+
+    // 4. Global reports
+    switch (path) {
+      case '/all-contracts':
+        return <ReservationAndContractView type="contracts" title="All Contracts" />;
+      case '/all-reservations-contracts':
+        return <ReservationAndContractView type="all-res-contracts" title="All Reservations & Contracts" />;
+      case '/res-contracts-1-day':
+        return <ReservationAndContractView type="day-1" title="Reservations & Contracts 1 Day" />;
+      case '/res-contracts-2-days':
+        return <ReservationAndContractView type="day-2" title="Reservations & Contracts 2 Days" />;
+      case '/res-contracts-3-days':
+        return <ReservationAndContractView type="day-3" title="Reservations & Contracts 3 Days" />;
+      case '/res-contracts-4-days':
+        return <ReservationAndContractView type="day-4" title="Reservations & Contracts 4 Days" />;
+      case '/res-contracts-5-days':
+        return <ReservationAndContractView type="day-5" title="Reservations & Contracts 5 Days" />;
+      default:
+        return <Container6 todayData={todayData} tomorrowData={tomorrowData} todayDisplayDate={todayDisplayDate} tomorrowDisplayDate={tomorrowDisplayDate} todayCount={todayCount} tomorrowCount={tomorrowCount} todayUnits={todayUnits} tomorrowUnits={tomorrowUnits} headers={headers} isLoading={isLoading} />;
+    }
+  };
+
   return (
     <div
       className="absolute left-0 right-0 bottom-0 overflow-hidden flex flex-col"
       style={{ top: isFullscreen ? 0 : 60 }}
       data-name="Container"
     >
-      {location ? (
-        <div className="flex-1 p-6 overflow-auto">
-          <Eyeball location={location} />
-        </div>
-      ) : (
-        <Container6 todayData={todayData} tomorrowData={tomorrowData} todayDisplayDate={todayDisplayDate} tomorrowDisplayDate={tomorrowDisplayDate} todayCount={todayCount} tomorrowCount={tomorrowCount} todayUnits={todayUnits} tomorrowUnits={tomorrowUnits} headers={headers} isLoading={isLoading} />
-      )}
+      {renderContent()}
     </div>
   );
 }
 
-function Container({ onEditClick, onMenuClick, collapsed, onToggle, isFullscreen, onFullscreen, todayData, tomorrowData, todayDisplayDate, tomorrowDisplayDate, todayCount, tomorrowCount, todayUnits, tomorrowUnits, headers, isLoading, location }: { onEditClick: () => void; onMenuClick: () => void; collapsed: boolean; onToggle?: () => void; isFullscreen: boolean; onFullscreen: () => void; todayData: any[]; tomorrowData: any[]; todayDisplayDate: string; tomorrowDisplayDate: string; todayCount: number; tomorrowCount: number; todayUnits: number; tomorrowUnits: number; headers?: string[]; isLoading: boolean; location?: string }) {
+function Container({ onEditClick, onMenuClick, collapsed, onToggle, isFullscreen, onFullscreen, todayData, tomorrowData, todayDisplayDate, tomorrowDisplayDate, todayCount, tomorrowCount, todayUnits, tomorrowUnits, headers, isLoading, location, path, reportType, sidebarWidth, isResizing }: { onEditClick: () => void; onMenuClick: () => void; collapsed: boolean; onToggle?: () => void; isFullscreen: boolean; onFullscreen: () => void; todayData: any[]; tomorrowData: any[]; todayDisplayDate: string; tomorrowDisplayDate: string; todayCount: number; tomorrowCount: number; todayUnits: number; tomorrowUnits: number; headers?: string[]; isLoading: boolean; location?: string; path?: string; reportType?: string; sidebarWidth: number; isResizing: boolean }) {
   return (
     <div
       className="absolute h-full overflow-clip top-0 right-0"
       style={{
-        left: isFullscreen ? 0 : (collapsed ? 60 : 248),
-        transition: isFullscreen ? 'left 0s' : "left 0.28s cubic-bezier(0.4,0,0.2,1)",
+        left: isFullscreen ? 0 : (collapsed ? 60 : sidebarWidth),
+        transition: isFullscreen || isResizing ? 'none' : "left 0.28s cubic-bezier(0.4,0,0.2,1)",
       }}
       data-name="Container"
     >
       <TopHeader onEditClick={onEditClick} onMenuClick={onMenuClick} onToggle={onToggle} onFullscreen={onFullscreen} isFullscreen={isFullscreen} />
-      <Container5 isFullscreen={isFullscreen} todayData={todayData} tomorrowData={tomorrowData} todayDisplayDate={todayDisplayDate} tomorrowDisplayDate={tomorrowDisplayDate} todayCount={todayCount} tomorrowCount={tomorrowCount} todayUnits={todayUnits} tomorrowUnits={tomorrowUnits} headers={headers} isLoading={isLoading} location={location} />
+      <Container5 isFullscreen={isFullscreen} todayData={todayData} tomorrowData={tomorrowData} todayDisplayDate={todayDisplayDate} tomorrowDisplayDate={tomorrowDisplayDate} todayCount={todayCount} tomorrowCount={tomorrowCount} todayUnits={todayUnits} tomorrowUnits={tomorrowUnits} headers={headers} isLoading={isLoading} location={location} path={path} reportType={reportType} />
     </div>
   );
 }
@@ -3538,26 +3592,29 @@ function MobileMenuButton({ onClick }: { onClick: () => void }) {
   );
 }
 
-function App({ onEditClick, onMenuClick, collapsed, onToggle, isFullscreen, onFullscreen, todayData, tomorrowData, todayDisplayDate, tomorrowDisplayDate, todayCount, tomorrowCount, todayUnits, tomorrowUnits, headers, isLoading, location }: { onEditClick: () => void; onMenuClick: () => void; collapsed: boolean; onToggle: () => void; isFullscreen: boolean; onFullscreen: () => void; todayData: any[]; tomorrowData: any[]; todayDisplayDate: string; tomorrowDisplayDate: string; todayCount: number; tomorrowCount: number; todayUnits: number; tomorrowUnits: number; headers?: string[]; isLoading: boolean; location?: string }) {
+function App({ onEditClick, onMenuClick, collapsed, onToggle, isFullscreen, onFullscreen, todayData, tomorrowData, todayDisplayDate, tomorrowDisplayDate, todayCount, tomorrowCount, todayUnits, tomorrowUnits, headers, isLoading, location, path, reportType, sidebarWidth, onWidthChange, isResizing }: { onEditClick: () => void; onMenuClick: () => void; collapsed: boolean; onToggle: () => void; isFullscreen: boolean; onFullscreen: () => void; todayData: any[]; tomorrowData: any[]; todayDisplayDate: string; tomorrowDisplayDate: string; todayCount: number; tomorrowCount: number; todayUnits: number; tomorrowUnits: number; headers?: string[]; isLoading: boolean; location?: string; path?: string; reportType?: string; sidebarWidth: number; onWidthChange: (w: number) => void; isResizing: boolean }) {
   return (
     <div className="bg-[#f8fafc] h-screen overflow-hidden relative shrink-0 w-full flex" data-name="App">
       {/* Collapsible sidebar — desktop only, hidden in fullscreen */}
       {!isFullscreen && (
         <div className="hidden md:flex h-full shrink-0 fixed top-0 left-0 z-30" style={{ height: "100vh" }}>
-          <CollapsibleSidebar collapsed={collapsed} onToggle={onToggle} />
+          <CollapsibleSidebar collapsed={collapsed} onToggle={onToggle} width={sidebarWidth} onWidthChange={onWidthChange} />
         </div>
       )}
-      <Container onEditClick={onEditClick} onMenuClick={onMenuClick} collapsed={collapsed} onToggle={onToggle} isFullscreen={isFullscreen} onFullscreen={onFullscreen} todayData={todayData} tomorrowData={tomorrowData} todayDisplayDate={todayDisplayDate} tomorrowDisplayDate={tomorrowDisplayDate} todayCount={todayCount} tomorrowCount={tomorrowCount} todayUnits={todayUnits} tomorrowUnits={tomorrowUnits} headers={headers} isLoading={isLoading} location={location} />
+      <Container onEditClick={onEditClick} onMenuClick={onMenuClick} collapsed={collapsed} onToggle={onToggle} isFullscreen={isFullscreen} onFullscreen={onFullscreen} todayData={todayData} tomorrowData={tomorrowData} todayDisplayDate={todayDisplayDate} tomorrowDisplayDate={tomorrowDisplayDate} todayCount={todayCount} tomorrowCount={tomorrowCount} todayUnits={tomorrowUnits} headers={headers} isLoading={isLoading} location={location} path={path} reportType={reportType} sidebarWidth={sidebarWidth} isResizing={isResizing} />
     </div>
   );
 }
 
 export default function Mazzotta() {
-  const { location } = useParams();
+  const { location, reportType } = useParams();
+  const { pathname: path } = useLocation();
   const [isEditOpen, setIsEditOpen] = useState(false);
   // ... (rest of the component state and effects)
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarWidth, setSidebarWidth] = useState(248);
+  const [isSidebarResizing, setIsSidebarResizing] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [reservationData, setReservationData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -3580,10 +3637,30 @@ export default function Mazzotta() {
     };
 
     fetchReservations();
-
-    const interval = setInterval(fetchReservations, 180000); // 3 minutes
+    
+    const interval = setInterval(fetchReservations, 300000); // 5 minutes
     return () => clearInterval(interval);
   }, [location]);
+
+  useEffect(() => {
+    if (!isSidebarResizing) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const newWidth = Math.min(Math.max(e.clientX, 160), 400);
+      setSidebarWidth(newWidth);
+    };
+
+    const handleMouseUp = () => {
+      setIsSidebarResizing(false);
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isSidebarResizing]);
 
   useEffect(() => {
     const handleFullscreenChange = () => {
@@ -3628,10 +3705,10 @@ export default function Mazzotta() {
     <div className="bg-white relative w-full h-screen overflow-hidden" data-name="Mazzotta (2)">
       {/* Main dashboard */}
       <App
-        onEditClick={() => setIsEditOpen((v) => !v)}
+        onEditClick={() => setIsEditOpen(true)}
         onMenuClick={() => setIsMobileSidebarOpen(true)}
         collapsed={sidebarCollapsed}
-        onToggle={() => setSidebarCollapsed((v) => !v)}
+        onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
         isFullscreen={isFullscreen}
         onFullscreen={toggleFullscreen}
         todayData={groupedData.today}
@@ -3645,6 +3722,14 @@ export default function Mazzotta() {
         headers={groupedData.headers}
         isLoading={isLoading}
         location={location}
+        path={path}
+        reportType={reportType}
+        sidebarWidth={sidebarWidth}
+        onWidthChange={(w) => {
+          setSidebarWidth(w);
+          setIsSidebarResizing(true);
+        }}
+        isResizing={isSidebarResizing}
       />
 
       {/* Mobile sidebar overlay */}
