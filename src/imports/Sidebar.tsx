@@ -11,6 +11,7 @@ import {
   FileText,
   MapPin,
   Building2,
+  BarChart3,
 } from "lucide-react";
 import mazzottaLogo from "./mazzotta-logo.png";
 import { ApiService } from "../services/api/apiService";
@@ -45,6 +46,7 @@ export function Sidebar({ collapsed, onToggle, width, onWidthChange }: SidebarPr
     if (pathname === "/res-contracts-3-days") return "res-contracts-3-days";
     if (pathname === "/res-contracts-4-days") return "res-contracts-4-days";
     if (pathname === "/res-contracts-5-days") return "res-contracts-5-days";
+    if (pathname.startsWith("/equipment-qty-report")) return "equipment-qty-report";
     return "";
   }, [routeLocation, routeReportType, pathname]);
 
@@ -256,6 +258,13 @@ export function Sidebar({ collapsed, onToggle, width, onWidthChange }: SidebarPr
                 icon={<CalendarRange className="w-3.5 h-3.5" />}
                 active={activeItem === "res-contracts-5-days"}
                 onClick={() => navigate("/res-contracts-5-days")}
+              />
+              <SubNavItem
+                label="Equipment Qty Next 6 Days"
+                icon={<BarChart3 className="w-3.5 h-3.5" />}
+                active={activeItem === "equipment-qty-report"}
+                onClick={() => navigate("/equipment-qty-report")}
+                collapsed={collapsed}
               />
             </div>
           </Collapsible.Content>

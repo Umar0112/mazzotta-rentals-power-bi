@@ -39,4 +39,11 @@ export class ReservationAndContractService {
   static async getNext6DaysSummary(): Promise<ReservationAndContractData> {
     return ApiService.get<ReservationAndContractData>("/public-all-reservations-contracts-next-6-days-summary");
   }
+
+  static async getEquipmentQtyNext6WorkingDays(location?: string): Promise<ReservationAndContractData> {
+    const url = location 
+      ? `/public-reservations-contracts-equipment-qty-next-6-working-days/${location}`
+      : "/public-reservations-contracts-equipment-qty-next-6-working-days";
+    return ApiService.get<ReservationAndContractData>(url);
+  }
 }

@@ -8,6 +8,7 @@ import { useParams, useLocation } from 'react-router';
 import Eyeball from '../app/components/Eyeball';
 import ReservationAndContractView from '../app/components/ReservationAndContractView';
 import LocationReservationView from '../app/components/LocationReservationView';
+import EquipmentQtyReportView from '../app/components/EquipmentQtyReportView';
 
 const formatApiDate = (dateStr: string) => {
   if (!dateStr || dateStr.length !== 8) return dateStr;
@@ -2237,6 +2238,9 @@ function Container5({ isFullscreen, todayData, tomorrowData, todayDisplayDate, t
       case '/res-contracts-5-days':
         return <ReservationAndContractView type="day-5" title="Reservations & Contracts 5 Days" />;
       default:
+        if (path?.startsWith('/equipment-qty-report')) {
+           return <EquipmentQtyReportView location={location} title="Equipment Qty Next 6 Working Days" />;
+        }
         return <Container6 todayData={todayData} tomorrowData={tomorrowData} todayDisplayDate={todayDisplayDate} tomorrowDisplayDate={tomorrowDisplayDate} todayCount={todayCount} tomorrowCount={tomorrowCount} todayUnits={todayUnits} tomorrowUnits={tomorrowUnits} headers={headers} isLoading={isLoading} />;
     }
   };
