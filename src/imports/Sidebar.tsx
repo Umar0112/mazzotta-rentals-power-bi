@@ -36,6 +36,16 @@ export function Sidebar({ collapsed, onToggle, width, onWidthChange }: SidebarPr
   const { pathname } = useLocation();
 
   const activeItem = useMemo(() => {
+    if (pathname.startsWith("/equipment-qty-report")) {
+      const parts = pathname.split("/");
+      if (parts.length > 2) return `location-${parts[2]}-equipment-qty`;
+      return "equipment-qty-report";
+    }
+    if (pathname.startsWith("/combined-equipment-qty-report")) {
+      const parts = pathname.split("/");
+      if (parts.length > 2) return `location-${parts[2]}-combined-equipment`;
+      return "combined-equipment-qty-report";
+    }
     if (routeLocation && routeReportType) return `location-${routeLocation}-${routeReportType}`;
     if (routeLocation) return `eyeball-${routeLocation}`;
     if (pathname === "/dashboard") return "all-reservations";
@@ -46,7 +56,6 @@ export function Sidebar({ collapsed, onToggle, width, onWidthChange }: SidebarPr
     if (pathname === "/res-contracts-3-days") return "res-contracts-3-days";
     if (pathname === "/res-contracts-4-days") return "res-contracts-4-days";
     if (pathname === "/res-contracts-5-days") return "res-contracts-5-days";
-    if (pathname.startsWith("/equipment-qty-report")) return "equipment-qty-report";
     return "";
   }, [routeLocation, routeReportType, pathname]);
 
@@ -266,6 +275,13 @@ export function Sidebar({ collapsed, onToggle, width, onWidthChange }: SidebarPr
                 onClick={() => navigate("/equipment-qty-report")}
                 collapsed={collapsed}
               />
+              <SubNavItem
+                label="Combined Equipment Qty"
+                icon={<BarChart3 className="w-3.5 h-3.5" />}
+                active={activeItem === "combined-equipment-qty-report"}
+                onClick={() => navigate("/combined-equipment-qty-report")}
+                collapsed={collapsed}
+              />
             </div>
           </Collapsible.Content>
         </Collapsible.Root>
@@ -404,6 +420,12 @@ export function Sidebar({ collapsed, onToggle, width, onWidthChange }: SidebarPr
                     icon={<CalendarRange className="w-3.5 h-3.5" />}
                     active={activeItem === `location-${loc}-day-5`}
                     onClick={() => navigate(`/location-report/${loc}/day-5`)}
+                  />
+                  <SubNavItem
+                    label="Combined Equipment Qty"
+                    icon={<BarChart3 className="w-3.5 h-3.5" />}
+                    active={activeItem === `location-${loc}-combined-equipment`}
+                    onClick={() => navigate(`/combined-equipment-qty-report/${loc}`)}
                   />
                 </div>
               </Collapsible.Content>

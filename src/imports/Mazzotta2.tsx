@@ -9,6 +9,7 @@ import Eyeball from '../app/components/Eyeball';
 import ReservationAndContractView from '../app/components/ReservationAndContractView';
 import LocationReservationView from '../app/components/LocationReservationView';
 import EquipmentQtyReportView from '../app/components/EquipmentQtyReportView';
+import CombinedEquipmentQtyReportView from '../app/components/CombinedEquipmentQtyReportView';
 
 const formatApiDate = (dateStr: string) => {
   if (!dateStr || dateStr.length !== 8) return dateStr;
@@ -2199,7 +2200,17 @@ function Container6({ todayData, tomorrowData, todayDisplayDate, tomorrowDisplay
 
 function Container5({ isFullscreen, todayData, tomorrowData, todayDisplayDate, tomorrowDisplayDate, todayCount, tomorrowCount, todayUnits, tomorrowUnits, headers, isLoading, location, path, reportType }: { isFullscreen: boolean; todayData: any[]; tomorrowData: any[]; todayDisplayDate: string; tomorrowDisplayDate: string; todayCount: number; tomorrowCount: number; todayUnits: number; tomorrowUnits: number; headers?: string[]; isLoading: boolean; location?: string; path?: string; reportType?: string }) {
   const renderContent = () => {
-    // Priority: Dynamic location reports
+    // 1. Check for equipment reports FIRST (they have higher priority than generic location views)
+    if (path?.startsWith('/equipment-qty-report')) {
+      const displayTitle = location ? `Equipment Qty Next 6 Working Days - Location ${location}` : "Equipment Qty Next 6 Working Days";
+      return <EquipmentQtyReportView location={location} title={displayTitle} />;
+    }
+    if (path?.startsWith('/combined-equipment-qty-report')) {
+      const displayTitle = location ? `Combined Equipment Qty Next 6 Working Days - Location ${location}` : "Combined Equipment Qty Next 6 Working Days";
+      return <CombinedEquipmentQtyReportView location={location} title={displayTitle} />;
+    }
+
+    // 2. Dynamic location reports (Today, Next Day, etc.)
     if (location && reportType) {
       let title = "";
       switch (reportType) {
@@ -2214,6 +2225,7 @@ function Container5({ isFullscreen, todayData, tomorrowData, todayDisplayDate, t
       return <LocationReservationView location={location} type={reportType as any} title={`${title} - Location ${location}`} />;
     }
 
+    // 3. Default Location view (Eyeball)
     if (location) {
       return (
         <div className="flex-1 p-6 overflow-auto">
@@ -2222,6 +2234,7 @@ function Container5({ isFullscreen, todayData, tomorrowData, todayDisplayDate, t
       );
     }
 
+    // 4. Global reports
     switch (path) {
       case '/all-contracts':
         return <ReservationAndContractView type="contracts" title="All Contracts" />;
@@ -2238,9 +2251,6 @@ function Container5({ isFullscreen, todayData, tomorrowData, todayDisplayDate, t
       case '/res-contracts-5-days':
         return <ReservationAndContractView type="day-5" title="Reservations & Contracts 5 Days" />;
       default:
-        if (path?.startsWith('/equipment-qty-report')) {
-           return <EquipmentQtyReportView location={location} title="Equipment Qty Next 6 Working Days" />;
-        }
         return <Container6 todayData={todayData} tomorrowData={tomorrowData} todayDisplayDate={todayDisplayDate} tomorrowDisplayDate={tomorrowDisplayDate} todayCount={todayCount} tomorrowCount={tomorrowCount} todayUnits={todayUnits} tomorrowUnits={tomorrowUnits} headers={headers} isLoading={isLoading} />;
     }
   };

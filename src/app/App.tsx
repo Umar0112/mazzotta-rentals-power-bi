@@ -19,6 +19,8 @@ export default function App() {
         <Route path="/location-report/:location/:reportType" element={<Mazzotta />} />
         <Route path="/equipment-qty-report" element={<Mazzotta />} />
         <Route path="/equipment-qty-report/:location" element={<Mazzotta />} />
+        <Route path="/combined-equipment-qty-report" element={<Mazzotta />} />
+        <Route path="/combined-equipment-qty-report/:location" element={<Mazzotta />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
