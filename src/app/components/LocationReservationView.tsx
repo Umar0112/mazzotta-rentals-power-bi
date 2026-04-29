@@ -157,6 +157,9 @@ export default function LocationReservationView({ location, type, title }: Locat
     };
 
     fetchData();
+
+    const interval = setInterval(fetchData, 300000); // 5 minutes
+    return () => clearInterval(interval);
   }, [location, type]);
 
   const groupedData = useMemo(() => {

@@ -73,6 +73,9 @@ export default function EquipmentQtyReportView({ location, title }: EquipmentQty
     };
 
     fetchData();
+
+    const interval = setInterval(fetchData, 300000); // 5 minutes
+    return () => clearInterval(interval);
   }, [location]);
 
   const transformedData = useMemo(() => {

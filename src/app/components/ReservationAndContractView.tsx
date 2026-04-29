@@ -160,6 +160,9 @@ export default function ReservationAndContractView({ type, title }: ReservationA
     };
 
     fetchData();
+
+    const interval = setInterval(fetchData, 300000); // 5 minutes
+    return () => clearInterval(interval);
   }, [type]);
 
   const groupedData = useMemo(() => {

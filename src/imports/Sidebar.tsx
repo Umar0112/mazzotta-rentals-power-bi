@@ -220,7 +220,7 @@ export function Sidebar({ collapsed, onToggle, width, onWidthChange }: SidebarPr
           </Collapsible.Trigger>
           <Collapsible.Content className="overflow-hidden data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0">
             <div className="ml-2 mt-0.5 flex flex-col gap-0.5 pl-3 border-l-2 border-[#F1F5F9]">
-              <SubNavItem
+              {/* <SubNavItem
                 label="All Reservations"
                 icon={<List className="w-3.5 h-3.5" />}
                 active={activeItem === "all-reservations"}
@@ -231,7 +231,7 @@ export function Sidebar({ collapsed, onToggle, width, onWidthChange }: SidebarPr
                 icon={<ScrollText className="w-3.5 h-3.5" />}
                 active={activeItem === "all-contracts"}
                 onClick={() => navigate("/all-contracts")}
-              />
+              /> */}
               <SubNavItem
                 label="All Reservations & Contracts"
                 icon={<FileText className="w-3.5 h-3.5" />}

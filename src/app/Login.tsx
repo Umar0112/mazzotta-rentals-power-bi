@@ -14,7 +14,7 @@ export default function Login() {
     setLoading(true);
     try {
       await authService.signIn({ email, pin: password });
-      navigate('/dashboard');
+      navigate('/all-reservations-contracts');
     } catch (error) {
       console.error(error);
     } finally {

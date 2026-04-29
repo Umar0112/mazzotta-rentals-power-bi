@@ -89,6 +89,9 @@ export default function CombinedEquipmentQtyReportView({ location, title }: Comb
     };
 
     fetchData();
+
+    const interval = setInterval(fetchData, 300000); // 5 minutes
+    return () => clearInterval(interval);
   }, [location]);
 
   const transformedData = useMemo(() => {

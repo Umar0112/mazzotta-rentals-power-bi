@@ -135,7 +135,7 @@ const Eyeball: React.FC<EyeballProps> = ({ location }) => {
       setLoading(true);
       setError(null);
       try {
-        const response = await ApiService.get(`/ibm-reservation-screen-eyeball?location=${location}`);
+        const response = await ApiService.get(`/public-reservation-screen-eyeball?location=${location}`);
         setData(response);
       } catch (err: any) {
         console.error("Error fetching eyeball data:", err);
@@ -147,7 +147,7 @@ const Eyeball: React.FC<EyeballProps> = ({ location }) => {
 
     fetchData();
 
-    const interval = setInterval(fetchData, 180000); // 3 minutes
+    const interval = setInterval(fetchData, 300000); // 5 minutes
     return () => clearInterval(interval);
   }, [location]);
 

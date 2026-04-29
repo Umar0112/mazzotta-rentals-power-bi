@@ -3637,8 +3637,8 @@ export default function Mazzotta() {
     };
 
     fetchReservations();
-
-    const interval = setInterval(fetchReservations, 180000); // 3 minutes
+    
+    const interval = setInterval(fetchReservations, 300000); // 5 minutes
     return () => clearInterval(interval);
   }, [location]);
 
