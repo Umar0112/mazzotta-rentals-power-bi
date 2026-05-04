@@ -15,23 +15,30 @@ const formatApiDate = (dateStr: string) => {
   return `${month}/${day}/${year}`;
 };
 
-const GenericTable = ({ data, headers }: { data: any[]; headers?: string[] }) => {
+const GenericTable = ({ data, headers, desiredHeaderOrder }: { data: any[]; headers?: string[]; desiredHeaderOrder?: string[] }) => {
   if (!data || data.length === 0) return (
     <div className="p-8 text-center text-gray-400 font-['Inter',sans-serif]">No data found.</div>
   );
 
-  // Desired header order
-  const desiredHeaderOrder = ['RESV# - CUSTOMER (CUST#)', 'What', 'Item', 'Ins Status', 'Where', 'Rep', 'OUT', 'Units', 'Notes'];
+  // Default header order if not provided
+  const headerOrder = desiredHeaderOrder || ['RESV# - CUSTOMER (CUST#)', 'What', 'Item', 'Ins Status', 'Where', 'Rep', 'OUT', 'Units', 'Notes'];
 
   // Filter and sort headers according to desired order
   let tableHeaders = headers && headers.length > 0 ? headers : Object.keys(data[0]);
   console.log(tableHeaders, "tableHeaders")
-  tableHeaders = tableHeaders.filter(h =>
-    desiredHeaderOrder.some(dh => h.toLowerCase().includes(dh.toLowerCase()))
-  );
+  console.log(data, "data")
+
+  const hasOut = tableHeaders.some(h => h.toUpperCase() === 'OUT');
+  const hasSalesRep = tableHeaders.some(h => h.toUpperCase() === 'SALES REP');
+
+  tableHeaders = tableHeaders.filter(h => {
+    if (hasOut && h.toLowerCase() === 'date out') return false;
+    if (hasSalesRep && h.toLowerCase() === 'sales rep #') return false;
+    return headerOrder.some(dh => h.toLowerCase().includes(dh.toLowerCase()));
+  });
   tableHeaders.sort((a, b) => {
-    const aIndex = desiredHeaderOrder.findIndex(dh => a.toLowerCase().includes(dh.toLowerCase()));
-    const bIndex = desiredHeaderOrder.findIndex(dh => b.toLowerCase().includes(dh.toLowerCase()));
+    const aIndex = headerOrder.findIndex(dh => a.toLowerCase().includes(dh.toLowerCase()));
+    const bIndex = headerOrder.findIndex(dh => b.toLowerCase().includes(dh.toLowerCase()));
     return aIndex - bIndex;
   });
 
@@ -46,14 +53,14 @@ const GenericTable = ({ data, headers }: { data: any[]; headers?: string[] }) =>
           <tr className="bg-[#f8fafc] shadow-[0_1px_0_0_#f1f5f9]">
             {tableHeaders.map((h, i) => (
               <th key={i} className={`px-[12px] py-[3px] font-['Inter:Bold',sans-serif] font-bold text-[12px] text-gray-600 tracking-[0.7px] uppercase whitespace-nowrap ${['Units', 'Rental Days', 'UNITS', 'DAYS'].includes(h) ? 'text-center' : 'text-left'}`}>
-                {h}
+                {h.toUpperCase() === 'SALES REP' ? 'REP' : h}
               </th>
             ))}
           </tr>
         </thead>
         <tbody>
           {data.map((row, rowIndex) => (
-            <tr key={rowIndex} className={`${rowIndex % 2 === 1 ? 'bg-gray-200' : ''} border-b border-[#f8fafc] hover:bg-slate-50 transition-colors`} style={{ height: '30px' }}>
+            <tr key={rowIndex} className={`${rowIndex % 2 === 1 ? 'bg-gray-100' : ''} border-b border-[#f8fafc] hover:bg-slate-100 transition-colors`} style={{ height: '30px' }}>
               {tableHeaders.map((h, colIndex) => {
                 const rawValue = row[h];
                 const value = typeof rawValue === 'string' ? rawValue.trim() : rawValue;
@@ -61,7 +68,9 @@ const GenericTable = ({ data, headers }: { data: any[]; headers?: string[] }) =>
                 const isRep = h === 'REP' || h === 'SALES REP';
                 const isNotes = h.toLowerCase() === 'notes' || h === 'NOTES';
                 const isOut = h === 'OUT' || h === 'Rental Days' || h === 'Date Out';
+                const isUnits = h.toLowerCase() === 'units';
                 const cellHasExpired = String(value ?? '').toLowerCase().includes('expired') || String(value ?? '').toLowerCase().includes('bulk');
+                const isUnitsGreaterThanOne = isUnits && value != null && value !== '' && !isNaN(Number(value)) && Number(value) > 1;
 
                 return (
                   <td key={colIndex} className={`px-[12px] whitespace-nowrap ${['Units', 'Rental Days', 'UNITS', 'DAYS'].includes(h) ? 'text-center' : ''}`}>
@@ -79,8 +88,10 @@ const GenericTable = ({ data, headers }: { data: any[]; headers?: string[] }) =>
                           : (value ?? '—')}
                       </span>
                     ) : (
-                      <span className={`font-['Inter:Medium',sans-serif] font-medium text-[13px] ${cellHasExpired ? 'text-[#c72e23]' : (isRep ? 'text-[#334155]' : 'text-[#0f172a]')}`}>
-                        {isOut && value && value.toString().length === 8 && !value.toString().includes('/') ? formatApiDate(value.toString()) : (value ?? '—')}
+                      <span className={`font-['Inter:Medium',sans-serif] font-medium text-[13px] ${cellHasExpired || isUnitsGreaterThanOne ? 'text-[#c72e23]' : (isRep ? 'text-[#334155]' : 'text-[#0f172a]')}`}>
+                        {isUnits && value != null && value !== '' && !isNaN(Number(value))
+                          ? Number(value).toString()
+                          : isOut && value && value.toString().length === 8 && !value.toString().includes('/') ? formatApiDate(value.toString()) : (value ?? '—')}
                       </span>
                     )}
                   </td>
@@ -94,7 +105,7 @@ const GenericTable = ({ data, headers }: { data: any[]; headers?: string[] }) =>
   );
 };
 
-const DynamicTable = ({ title, date, data, headers, color = '#c72e23' }: { title: string; date: string; data: any[]; headers?: string[]; color?: string }) => {
+const DynamicTable = ({ title, date, data, headers, color = '#c72e23', desiredHeaderOrder }: { title: string; date: string; data: any[]; headers?: string[]; color?: string; desiredHeaderOrder?: string[] }) => {
   const openItems = (data || []).filter(item => {
     const itemKey = Object.keys(item).find(k => k.toLowerCase().includes('item#'));
     if (!itemKey) return false;
@@ -124,7 +135,7 @@ const DynamicTable = ({ title, date, data, headers, color = '#c72e23' }: { title
         </div>
       </div>
       <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
-        <GenericTable data={data} headers={headers} />
+        <GenericTable data={data} headers={headers} desiredHeaderOrder={desiredHeaderOrder} />
       </div>
     </div>
   );
@@ -191,19 +202,19 @@ export default function ReservationAndContractView({ type, title }: ReservationA
             result = "All Location"
             break;
           case 'day-1':
-            result = "Day-1"
+            result = "Day 1"
             break;
           case 'day-2':
-            result = "Day-2"
+            result = "Day 2"
             break;
           case 'day-3':
-            result = "Day-3"
+            result = "Day 3"
             break;
           case 'day-4':
-            result = "Day-4"
+            result = "Day 4"
             break;
           case 'day-5':
-            result = "Day-5"
+            result = "Day 5"
             break;
           default:
             result = { success: false, data: [] };
@@ -262,7 +273,7 @@ export default function ReservationAndContractView({ type, title }: ReservationA
             nextDayTitle={`Contracts - ${pageType}`}
             nextDayCount={groupedData.summary.contracts?.count ?? 0}
             nextDayUnits={groupedData.summary.contracts?.units ?? 0}
-            totalTitle="Total"
+            totalTitle="Total Reservations & Contracts"
             totalCount={groupedData.summary.total?.count ?? 0}
             totalUnits={groupedData.summary.total?.units ?? 0}
           />
@@ -270,25 +281,26 @@ export default function ReservationAndContractView({ type, title }: ReservationA
       )}
 
       <div className="flex-1 min-h-0 flex flex-col gap-[20px] px-[24px] pb-6 no-scrollbar overflow-y-auto">
-        {(groupedData.hasDualStructure || type !== 'contracts') && groupedData.reservations.length > 0 && (
-          <DynamicTable
-            title={`Reservations - ${pageType}`}
-            date={groupedData.dateLabel}
-            data={groupedData.reservations}
-            headers={groupedData.headers}
-            color="#c72e23"
-          />
-        )}
+        {/* {(groupedData.hasDualStructure || type !== 'contracts') && groupedData.reservations.length > 0 && (
+        )} */}
+        <DynamicTable
+          title={`Reservations - ${pageType}`}
+          date={groupedData.dateLabel}
+          data={groupedData.reservations}
+          headers={groupedData.headers}
+          color="#c72e23"
+        />
 
-        {(groupedData.hasDualStructure || type === 'contracts') && groupedData.contracts.length > 0 && (
-          <DynamicTable
-            title={`Contracts - ${pageType}`}
-            date={groupedData.dateLabel}
-            data={groupedData.contracts}
-            headers={groupedData.headers}
-            color="#1d50ad"
-          />
-        )}
+        <DynamicTable
+          title={`Contracts - ${pageType}`}
+          date={groupedData.dateLabel}
+          data={groupedData.contracts}
+          headers={groupedData.headers}
+          color="#1d50ad"
+          desiredHeaderOrder={['CNTR# - CUSTOMER(CUST#)', 'What', 'Item', 'Where', 'REP', 'OUT', 'UNITS', 'Notes']}
+        />
+        {/* {(groupedData.hasDualStructure || type === 'contracts') && groupedData.contracts.length > 0 && (
+        )} */}
 
         {!groupedData.hasDualStructure && groupedData.reservations.length === 0 && groupedData.contracts.length === 0 && (
           <div className="bg-white flex-1 min-h-0 flex flex-col rounded-[16px] items-center justify-center p-12 ring-1 ring-slate-200/50 shadow-sm">

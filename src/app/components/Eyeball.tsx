@@ -15,12 +15,32 @@ const formatApiDate = (dateStr: string) => {
   return `${month}/${day}/${year}`;
 };
 
-const GenericTable = ({ data, headers }: { data: any[]; headers?: string[] }) => {
+const GenericTable = ({ data, headers, desiredHeaderOrder }: { data: any[]; headers?: string[]; desiredHeaderOrder?: string[] }) => {
   if (!data || data.length === 0) return (
     <div className="p-8 text-center text-gray-400 font-['Inter',sans-serif]">No reservations found.</div>
   );
 
-  const tableHeaders = headers || (data.length > 0 ? Object.keys(data[0]) : []);
+  // Default header order if not provided
+  const headerOrder = desiredHeaderOrder || ['RESV# - CUSTOMER (CUST#)', 'What', 'Item', 'Ins Status', 'Where', 'Rep', 'OUT', 'Units', 'Notes'];
+
+  // Filter and sort headers according to desired order
+  let tableHeaders = headers && headers.length > 0 ? headers : (data.length > 0 ? Object.keys(data[0]) : []);
+
+  const hasOut = tableHeaders.some(h => h.toUpperCase() === 'OUT');
+  const hasSalesRep = tableHeaders.some(h => h.toUpperCase() === 'SALES REP');
+
+  tableHeaders = tableHeaders.filter(h => {
+    if (hasOut && h.toLowerCase() === 'date out') return false;
+    if (hasSalesRep && h.toLowerCase() === 'sales rep #') return false;
+    return headerOrder.some(dh => h.toLowerCase().includes(dh.toLowerCase()));
+  });
+
+  tableHeaders.sort((a, b) => {
+    const aIndex = headerOrder.findIndex(dh => a.toLowerCase().includes(dh.toLowerCase()));
+    const bIndex = headerOrder.findIndex(dh => b.toLowerCase().includes(dh.toLowerCase()));
+    return aIndex - bIndex;
+  });
+
 
   return (
     <div className="flex-1 overflow-auto relative w-full no-scrollbar" data-name="GenericTable">
@@ -32,20 +52,20 @@ const GenericTable = ({ data, headers }: { data: any[]; headers?: string[] }) =>
         <thead className="sticky top-0 z-10">
           <tr className="bg-[#f8fafc] shadow-[0_1px_0_0_#f1f5f9]">
             {tableHeaders.map((h, i) => (
-              <th key={i} className={`px-[12px] py-[6px] font-['Inter:Bold',sans-serif] font-bold text-[12px] text-[#94a3b8] tracking-[0.7px] uppercase whitespace-nowrap ${['Units', 'Rental Days', 'UNITS', 'DAYS'].includes(h) ? 'text-center' : 'text-left'}`}>
-                {h}
+              <th key={i} className={`px-[12px] py-[6px] font-['Inter:Bold',sans-serif] font-bold text-[12px] text-gray-600 tracking-[0.7px] uppercase whitespace-nowrap ${['Units', 'Rental Days', 'UNITS', 'DAYS'].includes(h) ? 'text-center' : 'text-left'}`}>
+                {h.toUpperCase() === 'SALES REP' ? 'REP' : h}
               </th>
             ))}
           </tr>
         </thead>
         <tbody>
           {data.map((row, rowIndex) => (
-            <tr key={rowIndex} className={`${rowIndex % 2 === 1 ? 'bg-[#fafafa]' : 'bg-white'} border-b border-[#f8fafc] hover:bg-slate-50 transition-colors`} style={{ height: '38px' }}>
+            <tr key={rowIndex} className={`${rowIndex % 2 === 1 ? 'bg-gray-100' : ''} border-b border-[#f8fafc] hover:bg-slate-100 transition-colors`} style={{ height: '28px' }}>
               {tableHeaders.map((h, colIndex) => {
                 const rawValue = row[h];
                 const value = typeof rawValue === 'string' ? rawValue.trim() : rawValue;
                 const isItemNum = h.toLowerCase().includes('item#');
-                const isRep = h === 'REP';
+                const isRep = h === 'REP' || h === 'SALES REP';
                 const isOut = h === 'OUT' || h === 'Rental Days';
 
                 const isNotes = h.toLowerCase() === 'notes';
@@ -83,7 +103,7 @@ const GenericTable = ({ data, headers }: { data: any[]; headers?: string[] }) =>
   );
 };
 
-const DynamicReservationTable = ({ title, date, data, headers }: { title: string; date: string; data: any[]; headers?: string[] }) => {
+const DynamicReservationTable = ({ title, date, data, headers, desiredHeaderOrder }: { title: string; date: string; data: any[]; headers?: string[]; desiredHeaderOrder?: string[] }) => {
   const openItems = (data || []).filter(item => {
     const itemKey = Object.keys(item).find(k => k.toLowerCase().includes('item#'));
     if (!itemKey) return false;
@@ -92,20 +112,20 @@ const DynamicReservationTable = ({ title, date, data, headers }: { title: string
   }).length;
 
   return (
-    <div className="bg-white flex-1 min-h-0 flex flex-col rounded-[16px] relative overflow-hidden ring-1 ring-slate-200/50 shadow-sm" data-name="TableCard">
-      <div className="h-[68px] relative shrink-0 w-full border-b border-slate-100 bg-white">
-        <div className="flex items-center justify-between h-full px-[20px]">
+    <div className="flex-1 min-h-0 flex flex-col relative overflow-hidden " data-name="TableCard">
+      <div className="h-[40px] relative shrink-0 w-full border-b border-slate-100">
+        <div className="flex items-center justify-between h-full">
           <div className="flex items-center gap-[12px]">
             <div className={`h-[20px] rounded-full shrink-0 w-[4px] ${title.includes('Today') ? 'bg-[#c72e23]' : 'bg-[#1d50ad]'}`} />
             <div className="flex flex-col">
               <span className="font-['Inter:Semi_Bold',sans-serif] font-semibold text-[17px] text-[#0f172a] leading-tight">{title}</span>
-              <span className="font-['Inter:Regular',sans-serif] font-normal text-[14px] text-[#94a3b8]">{date}</span>
+              {/* <span className="font-['Inter:Regular',sans-serif] font-normal text-[14px] text-[#94a3b8]">{date}</span> */}
             </div>
-            <div className="bg-[#f1f5f9] px-[8px] py-[2px] rounded-[6px] ml-1">
+            {/* <div className="bg-[#f1f5f9] px-[8px] py-[2px] rounded-[6px] ml-1">
               <span className="font-['Inter:Semi_Bold',sans-serif] font-semibold text-[14px] text-[#64748b]">{data.length}</span>
-            </div>
+            </div> */}
           </div>
-          <div className="flex items-center gap-[12px]">
+          {/* <div className="flex items-center gap-[12px]">
             {openItems > 0 && (
               <div className="bg-[#fef2f2] border border-[#fecaca] px-[9px] py-[3px] rounded-[6px]">
                 <span className="font-['Inter:Semi_Bold',sans-serif] font-semibold text-[14px] text-[#c72e23]">{openItems} OPEN</span>
@@ -115,11 +135,11 @@ const DynamicReservationTable = ({ title, date, data, headers }: { title: string
               <span className="font-['Inter:Medium',sans-serif] font-medium text-[14px] text-[#c72e23]">Live Eyeball Data</span>
               <div className="size-2 bg-green-500 rounded-full animate-pulse" />
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
       <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
-        <GenericTable data={data} headers={headers} />
+        <GenericTable data={data} headers={headers} desiredHeaderOrder={desiredHeaderOrder} />
       </div>
     </div>
   );
@@ -210,6 +230,7 @@ const Eyeball: React.FC<EyeballProps> = ({ location }) => {
       <div className="shrink-0 pt-[4px] pb-[20px]">
         <KpiCard
           todayTitle={groupedData.todayTitle}
+          todayDate={groupedData.todayDate}
           todayCount={groupedData.todayCount}
           todayUnits={groupedData.todayUnits}
           nextDayTitle={groupedData.nextWorkDayTitle}
@@ -224,6 +245,7 @@ const Eyeball: React.FC<EyeballProps> = ({ location }) => {
           date={groupedData.todayDate}
           data={groupedData.today}
           headers={groupedData.headers}
+          desiredHeaderOrder={['RESV# - CUSTOMER (CUST#)', 'What', 'Item', 'Ins Status', 'Where', 'Rep', 'OUT', 'Units', 'Notes']}
         />
 
         <DynamicReservationTable
@@ -231,6 +253,7 @@ const Eyeball: React.FC<EyeballProps> = ({ location }) => {
           date={groupedData.nextWorkDayDate}
           data={groupedData.nextWorkDay}
           headers={groupedData.headers}
+          desiredHeaderOrder={['RESV# - CUSTOMER (CUST#)', 'What', 'Item', 'Ins Status', 'Where', 'Rep', 'OUT', 'Units', 'Notes']}
         />
       </div>
     </div>
